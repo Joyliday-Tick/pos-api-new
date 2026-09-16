@@ -336,16 +336,21 @@ func DeductCardPlay(input models.CardPlayDeductDto, userId int) ([]Deposit, erro
 			AmountEbonus:       int(WithDraw.BalanceBonus),
 			AmountDiscountCash: WithDraw.BalanceDiscountCash,
 		}, userId)
-		if err == nil {
-			_, err := UpdateCardDepositBalance(models.CardDepositBalanceDto{
-				ID:                  WithDraw.Id,
-				BalanceCoin:         int(WithDraw.BalanceCoin),
-				BalanceBonus:        int(WithDraw.BalanceBonus),
-				BalanceDiscountCash: &WithDraw.BalanceDiscountCash,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to update card deposit balance: %w", err)
-			}
+		// เดิมการหักยอดอยู่ใน if err == nil โดยไม่มี else
+		// ถ้า CreateCardWithdraw ล้มเหลว err จะถูกทิ้ง วนต่อ แล้ว return nil = สำเร็จ
+		// ผลคือเครื่องปลดล็อกให้เล่นโดยที่ยอดในบัตรไม่ถูกหัก
+		if err != nil {
+			return nil, fmt.Errorf("failed to create card withdraw: %w", err)
+		}
+
+		_, err = UpdateCardDepositBalance(models.CardDepositBalanceDto{
+			ID:                  WithDraw.Id,
+			BalanceCoin:         int(WithDraw.BalanceCoin),
+			BalanceBonus:        int(WithDraw.BalanceBonus),
+			BalanceDiscountCash: &WithDraw.BalanceDiscountCash,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to update card deposit balance: %w", err)
 		}
 	}
 	fmt.Println("withdraws 2:", Withdraws)
