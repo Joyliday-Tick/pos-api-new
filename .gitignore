@@ -1,2 +1,5 @@
 .env
 .gitlab-ci.yml
+
+# build artifact (tmp/main.exe ~62 MB)
+tmp/

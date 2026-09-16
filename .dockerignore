@@ -1,0 +1,14 @@
+# Dockerfile ใช้ COPY . /app ถ้าไม่มีไฟล์นี้ .env จะถูก build ติดไปกับ image
+# แล้วถูก push ขึ้น container registry — ใครที่ pull image ได้จะได้ credential ทั้งหมด
+.env
+.env.*
+!.env.example
+
+# build artifact (tmp/main.exe ~62 MB)
+tmp/
+
+.git
+.gitignore
+.gitlab-ci.yml
+
+*.md
