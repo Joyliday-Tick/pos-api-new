@@ -467,12 +467,16 @@ func GenerateBillNo(PosID string) string {
 
 	prefix := os.Getenv("BILL_PREFIX_NORMAL")
 
+	// totalRecord นับเฉพาะบิลของ "วันนี้" (startOfDay..startOfNextDay)
+	// เลขบิลจึงต้องมี day ด้วย ไม่งั้นพอขึ้นวันใหม่ตัวนับรีเซ็ตเป็น 1
+	// แล้วได้เลขซ้ำกับบิลของวันก่อนหน้าในเดือนเดียวกัน
 	BillNo := fmt.Sprintf(
-		"%s-%s-%02d%02d%04d",
+		"%s-%s-%02d%02d%02d%04d",
 		prefix,
 		PosID,
 		year%100,
 		month,
+		day,
 		totalRecord,
 	)
 
