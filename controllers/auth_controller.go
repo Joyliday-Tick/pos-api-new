@@ -2,18 +2,14 @@ package controllers
 
 import (
 	"net/http"
-	"os"
 
 	"new-pos-api/models"
 
 	"github.com/gin-gonic/gin"
 
-	"fmt"
 	"new-pos-api/services"
 	"new-pos-api/utils"
 )
-
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 // Login godoc
 // @Summary Login to get JWT token
@@ -26,9 +22,6 @@ var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 // @Failure 500 {object} utils.StandardErrorResponse
 // @Router /api/auth/login [post]
 func Login(c *gin.Context) {
-	fmt.Println("jwtSecret", jwtSecret)
-	fmt.Println("JWT_SECRET", os.Getenv("JWT_SECRET"))
-
 	var req models.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -36,7 +29,6 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("username", req.Username, "password", req.Password)
 	username := req.Username
 	password := req.Password
 

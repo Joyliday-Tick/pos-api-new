@@ -37,14 +37,12 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Bearer token
 		if strings.HasPrefix(authHeader, "Bearer ") {
 			token := strings.TrimPrefix(authHeader, "Bearer ")
-			fmt.Println("Bearer token", token)
 			claims, err := utils.VerifyJwt(token)
 			if err != nil {
 				utils.Error(c, http.StatusUnauthorized, "Invalid Bearer token")
 				c.Abort()
 				return
 			} else {
-				fmt.Println("JWT Claims:", claims)
 				// สามารถใช้ claims ที่ได้จาก JWT token ต่อไปได้ที่นี่
 				c.Set("userClaims", claims)
 			}
@@ -62,7 +60,15 @@ func AuthMiddleware() gin.HandlerFunc {
 				return
 			}
 
+			// SplitN คืน slice ยาว 1 ถ้าไม่มี ":" -> userPass[1] panic
+			// ส่ง "Basic YQ==" (base64 ของ "a") ก็ทำให้ panic ได้โดยไม่ต้อง login
 			userPass := strings.SplitN(string(decodedBytes), ":", 2)
+			if len(userPass) != 2 {
+				utils.Error(c, http.StatusUnauthorized, "Invalid Basic auth encoding")
+				c.Abort()
+				return
+			}
+
 			auth, err := services.Authenticate(userPass[0], userPass[1])
 			if err != nil {
 				utils.Error(c, http.StatusUnauthorized, "Invalid username or password")
