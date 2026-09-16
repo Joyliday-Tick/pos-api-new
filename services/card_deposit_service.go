@@ -163,17 +163,21 @@ func UpdateCardDepositBalance(input models.CardDepositBalanceDto) (models.CardDe
 	if result.Error != nil {
 		return input, fmt.Errorf("failed to update card deposit balance: %w", result.Error)
 	}
-	//TODO : disable card play if balance_coid is 0
+	// ปิด card play เมื่อยอดเหลือ 0
+	// เดิมเงื่อนไขกลับด้าน (if err != nil) บล็อกนี้จึงทำงานเฉพาะตอน query ล้มเหลว
+	// ซึ่งตอนนั้น deposit เป็น nil เสมอ -> deposit[0] panic
+	// และตอน query สำเร็จก็ข้ามไปเลย ทำให้ card play ที่ยอดเหลือ 0 ไม่เคยถูกปิด
+	//
+	// ขั้นตอนนี้เป็นงานพ่วง ไม่ใช่ส่วนของการหักยอด (ยอดถูกหักสำเร็จไปแล้วด้านบน)
+	// ถ้าล้มเหลวจึงแค่ log ไม่ return error ไม่งั้นผู้เรียกจะ retry แล้วหักซ้ำ
 	var depositID []string
 	depositID = append(depositID, input.ID.String())
 	deposit, err := FindCardDepositByIds(depositID)
 	if err != nil {
-		balance_coin := deposit[0].BalanceCoin
-		if balance_coin == 0 {
-			err = UpdateCardPlayIsDelete(input.ID)
-			if err != nil {
-				return input, fmt.Errorf("failed to update card play is delete: %w", err)
-			}
+		fmt.Printf("card deposit %s: อ่านยอดคงเหลือหลังหักไม่สำเร็จ: %v\n", input.ID, err)
+	} else if len(deposit) > 0 && deposit[0].BalanceCoin == 0 {
+		if err := UpdateCardPlayIsDelete(input.ID); err != nil {
+			fmt.Printf("card deposit %s: ปิด card play ไม่สำเร็จ: %v\n", input.ID, err)
 		}
 	}
 	return input, nil
