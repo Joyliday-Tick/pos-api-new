@@ -26,9 +26,11 @@ type UsersUpdateDto struct {
 }
 
 type UsersData struct {
-	ID            int        `json:"id"`
-	Username      string     `json:"username"`
-	Password      string     `json:"password"`
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	// json:"-" กันรหัสผ่านหลุดออกไปกับ response
+	// struct นี้เป็นขาออกอย่างเดียว ไม่ได้ใช้ bind ข้อมูลขาเข้า
+	Password      string     `json:"-"`
 	Name          string     `json:"name"`
 	SName         string     `json:"s_name"`
 	Status        string     `json:"status"`
@@ -47,9 +49,12 @@ type UsersData struct {
 }
 
 type Users struct {
-	ID          int        `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
-	Username    string     `gorm:"column:username" json:"username"`
-	Password    string     `gorm:"column:password" json:"password"`
+	ID       int    `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	Username string `gorm:"column:username" json:"username"`
+	// json:"-" กันรหัสผ่านหลุดออกไปกับ response
+	// handler หลายตัวคืน struct นี้ตรง ๆ (เช่น GET /api/user/list)
+	// tag gorm ยังอยู่ครบ การอ่าน/เขียน DB จึงไม่เปลี่ยน
+	Password    string     `gorm:"column:password" json:"-"`
 	Name        string     `gorm:"column:name" json:"name"`
 	SName       string     `gorm:"column:s_name" json:"s_name"`
 	Status      string     `gorm:"column:status" json:"status"`
