@@ -1,0 +1,5794 @@
+basePath: /
+definitions:
+  model_v2.DiscountDto:
+    properties:
+      discount_code:
+        type: string
+      discount_code_id:
+        type: string
+      discount_id:
+        type: string
+      discount_value:
+        type: integer
+      member_tel:
+        type: string
+      message:
+        type: string
+      usage_date:
+        type: string
+    type: object
+  model_v2.SMCPrizeData:
+    properties:
+      asset_id:
+        type: string
+      calculate_balance_ebonus:
+        type: integer
+      calculate_balance_ecoin:
+        type: integer
+      date_time:
+        type: string
+      date_total_ebonus:
+        type: integer
+      date_total_ecoin:
+        type: integer
+      discount:
+        type: number
+      discount_cash:
+        type: integer
+      discount_code:
+        type: string
+      discount_message:
+        type: string
+      get_prize:
+        type: boolean
+      member_tel:
+        type: string
+      special_discount:
+        $ref: '#/definitions/model_v2.DiscountDto'
+    type: object
+  model_v2.VerifyCardRequest:
+    properties:
+      asset_id:
+        type: string
+      branch_id:
+        type: string
+      card_no:
+        type: string
+      deduct_condition:
+        type: string
+      discount_cash:
+        type: integer
+      game_price:
+        type: integer
+      head_id:
+        type: integer
+      item_id:
+        type: integer
+      machine_id:
+        type: integer
+    required:
+    - asset_id
+    - branch_id
+    - card_no
+    - deduct_condition
+    - game_price
+    - head_id
+    - item_id
+    - machine_id
+    type: object
+  model_v2.VerifyCardResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model_v2.VerifyCardResponseData'
+      message:
+        type: string
+      status:
+        type: string
+    required:
+    - data
+    - message
+    - status
+    type: object
+  model_v2.VerifyCardResponseData:
+    properties:
+      balance_ebonus:
+        type: integer
+      balance_ecoin:
+        type: integer
+      balance_etimes:
+        type: integer
+      card_id:
+        type: string
+      card_no:
+        type: string
+      card_type:
+        type: string
+      head_id:
+        type: integer
+      member_tel:
+        type: string
+      time_remaining:
+        type: string
+    required:
+    - balance_ebonus
+    - balance_ecoin
+    - balance_etimes
+    - card_id
+    - card_no
+    - card_type
+    - head_id
+    - member_tel
+    - time_remaining
+    type: object
+  model_v2.VerifyCardSmcResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model_v2.VerifyCardResponseData'
+      message:
+        type: string
+      smc_data:
+        $ref: '#/definitions/model_v2.SMCPrizeData'
+      status:
+        type: string
+    required:
+    - data
+    - message
+    - smc_data
+    - status
+    type: object
+  models.AdjustPointDto:
+    properties:
+      adj_agility:
+        type: integer
+      adj_balance:
+        type: integer
+      adj_estamp:
+        type: integer
+      adj_finwow:
+        type: integer
+      adj_joylicoin:
+        type: integer
+      adj_jubu_jibi:
+        type: integer
+      adj_point:
+        type: integer
+      adj_power:
+        type: integer
+      adj_reaction_time:
+        type: integer
+      adj_speed:
+        type: integer
+      branch:
+        type: string
+      member_tel:
+        type: string
+      reason:
+        type: string
+      username:
+        type: string
+    type: object
+  models.BranchDto:
+    properties:
+      b_main:
+        type: string
+      branch_code:
+        type: string
+      branch_name:
+        type: string
+      is_active:
+        type: boolean
+    type: object
+  models.CardPlayDeductDto:
+    properties:
+      card_no:
+        type: string
+      card_play_id:
+        type: string
+      discount_cash_amount:
+        type: number
+      e_bonus:
+        type: integer
+      e_coin:
+        type: integer
+      from_channel:
+        type: string
+    type: object
+  models.CardPlayDto:
+    properties:
+      card_no:
+        type: string
+      play_branch:
+        type: boolean
+      play_machine:
+        type: boolean
+    type: object
+  models.CardPlayVerifyDto:
+    properties:
+      card_no:
+        type: string
+      play_branch:
+        type: string
+      play_machine:
+        type: string
+      use_bonus:
+        type: integer
+      use_coin:
+        type: integer
+    type: object
+  models.CardRegisterDto:
+    properties:
+      card_no:
+        type: string
+      card_type_id:
+        type: string
+      e_bonus:
+        type: integer
+      e_coin:
+        type: integer
+      from_channel:
+        type: string
+      is_active:
+        type: boolean
+      member_tel:
+        type: string
+    type: object
+  models.CardTypeDto:
+    properties:
+      is_active:
+        type: boolean
+      name:
+        type: string
+      show_balance:
+        type: string
+    type: object
+  models.ClaimPrizeDto:
+    properties:
+      card_no:
+        type: string
+      claim_amount:
+        type: integer
+      claim_user:
+        type: string
+      discount:
+        type: integer
+      e_bonus:
+        type: integer
+      e_coin:
+        type: integer
+      joylicoin:
+        type: integer
+      location:
+        type: string
+      member_tel:
+        type: string
+      option_id:
+        type: integer
+      product_price:
+        type: integer
+      spend_amount:
+        type: integer
+      spend_ebonus:
+        type: integer
+      spend_ecoin:
+        type: integer
+    type: object
+  models.ClearCardDto:
+    properties:
+      balance_ebonus:
+        type: integer
+      balance_ecoin:
+        type: integer
+      card_no:
+        type: string
+      card_type:
+        type: string
+      created_by:
+        type: string
+      location:
+        type: string
+      member_tel:
+        type: string
+      time_play:
+        type: integer
+    type: object
+  models.DepositJubuJibi:
+    properties:
+      cashier:
+        type: string
+      deposit:
+        type: integer
+      deposit_joylicoin:
+        type: integer
+      discount:
+        type: number
+      joylicoin:
+        type: integer
+      location:
+        type: string
+      member_tel:
+        type: string
+      pos_id:
+        type: string
+      spending:
+        type: integer
+      sub_items:
+        items:
+          $ref: '#/definitions/models.DepositSubJubuJibi'
+        type: array
+      topup_deduct:
+        type: integer
+    type: object
+  models.DepositSubJubuJibi:
+    properties:
+      joylicoin:
+        type: integer
+      price:
+        type: integer
+      product_name:
+        type: string
+      qty:
+        type: integer
+      sku:
+        type: string
+    type: object
+  models.DiscountCashDto:
+    properties:
+      balance_discount_cash:
+        type: number
+      balance_discount_near_expire:
+        type: number
+      discount_cash_near_expire_date:
+        type: string
+      discounts:
+        items:
+          $ref: '#/definitions/models.DiscountsDto'
+        type: array
+      member_tel:
+        type: string
+    type: object
+  models.DiscountsDto:
+    properties:
+      balance_discount_cash:
+        type: number
+      deposit_id:
+        type: string
+      discount_cash_expire_date:
+        type: string
+    type: object
+  models.ExportClaimPrizeParams:
+    properties:
+      endDate:
+        type: string
+      location:
+        type: string
+      memberTel:
+        type: string
+      startDate:
+        type: string
+    type: object
+  models.ExportClaimReport:
+    properties:
+      endDate:
+        type: string
+      location:
+        items:
+          type: string
+        type: array
+      memberTel:
+        type: string
+      startDate:
+        type: string
+    type: object
+  models.ExportClearCardReport:
+    properties:
+      endDate:
+        type: string
+      location:
+        type: string
+      startDate:
+        type: string
+    type: object
+  models.ExportPosSalePaymentReport:
+    properties:
+      endDate:
+        type: string
+      location:
+        type: string
+      paymentTypeId:
+        type: string
+      startDate:
+        type: string
+    type: object
+  models.GroupMenuDto:
+    properties:
+      display_name:
+        type: string
+      enable_member:
+        type: boolean
+      is_active:
+        type: boolean
+      name:
+        type: string
+      receipt_stub:
+        type: boolean
+      sorting:
+        type: integer
+    type: object
+  models.JoylicoinDto:
+    properties:
+      joylicoin:
+        type: integer
+    type: object
+  models.LockCardDto:
+    properties:
+      balance_discount_cash:
+        type: integer
+      balance_ebonus:
+        type: integer
+      balance_ecoin:
+        type: integer
+      card_no:
+        type: string
+      lock_by:
+        description: IsLock              bool       `json:"is_lock"`
+        type: string
+      lock_location:
+        type: string
+      lock_reason:
+        type: string
+      member_tel:
+        type: string
+      ref_card_entity_id:
+        type: string
+    type: object
+  models.LogTransferCardDto:
+    properties:
+      created_by:
+        type: string
+      location:
+        type: string
+      member_tel:
+        type: string
+      old_card_no:
+        type: string
+      transfer_card_no:
+        type: string
+    type: object
+  models.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  models.MacAddressList:
+    properties:
+      mac_address_list:
+        items:
+          type: string
+        type: array
+    type: object
+  models.MachineGroupDto:
+    properties:
+      group_name:
+        type: string
+      is_active:
+        type: boolean
+      machine_group_type:
+        type: string
+      machine_list_json:
+        items:
+          $ref: '#/definitions/models.MachineSubGroupData'
+        type: array
+    type: object
+  models.MachineSubGroupData:
+    properties:
+      category:
+        type: string
+      e_bonus:
+        type: integer
+      e_coin:
+        type: integer
+      group_id:
+        type: integer
+      machine_id:
+        type: integer
+      machine_name:
+        type: string
+      play_time:
+        type: integer
+    type: object
+  models.MemberDto:
+    properties:
+      bonus:
+        type: integer
+      ecoin:
+        type: integer
+      estamp:
+        type: integer
+      finwow:
+        type: integer
+      is_active:
+        type: boolean
+      jubu_jibi:
+        type: integer
+      m_name:
+        type: string
+      mskill1:
+        type: integer
+      mskill2:
+        type: integer
+      mskill3:
+        type: integer
+      mskill4:
+        type: integer
+      mskill5:
+        type: integer
+      s_name:
+        type: string
+      tel:
+        type: string
+      total_point:
+        type: integer
+    type: object
+  models.MemberNameDto:
+    properties:
+      m_name:
+        type: string
+      s_name:
+        type: string
+      tel:
+        type: string
+    type: object
+  models.PlayTypeDto:
+    properties:
+      is_active:
+        type: boolean
+      name:
+        type: string
+      promotion_time:
+        type: integer
+    type: object
+  models.PosBranchGroupDto:
+    properties:
+      branch_list:
+        items:
+          type: string
+        type: array
+      group_name:
+        type: string
+      is_active:
+        type: boolean
+    type: object
+  models.PosMenuDto:
+    properties:
+      bonus_expire_date:
+        type: string
+      bonus_expire_limit_days:
+        type: integer
+      branch_group_id:
+        type: integer
+      branch_list:
+        items:
+          type: string
+        type: array
+      card_expire_date:
+        type: string
+      card_expire_limit_minutes:
+        type: integer
+      card_type_id:
+        type: string
+      code:
+        type: string
+      description:
+        type: string
+      discount_cash:
+        type: integer
+      discount_cash_expire_date:
+        type: string
+      discount_cash_limit_days:
+        type: integer
+      e_bonus:
+        type: integer
+      e_coin:
+        type: integer
+      end_date:
+        type: string
+      group_menu_id:
+        type: string
+      is_active:
+        type: boolean
+      limit_time:
+        type: integer
+      machine_group_id:
+        type: integer
+      price:
+        type: integer
+      start_date:
+        type: string
+    required:
+    - branch_group_id
+    - card_type_id
+    - code
+    - description
+    - group_menu_id
+    - is_active
+    - price
+    type: object
+  models.PosStationDto:
+    properties:
+      bill_header_line1:
+        type: string
+      bill_header_line2:
+        type: string
+      bill_header_line3:
+        type: string
+      bill_header_line4:
+        type: string
+      bill_header_line5:
+        type: string
+      is_active:
+        type: boolean
+      logo_id:
+        type: string
+      mac_address:
+        items:
+          type: string
+        type: array
+      pos_code:
+        type: string
+      pos_description:
+        type: string
+      pos_location:
+        type: string
+    type: object
+  models.PosSubTransactionDto:
+    properties:
+      bill_no:
+        type: string
+      card_deposit_id:
+        type: string
+      e_bonus:
+        type: integer
+      e_coin:
+        type: integer
+      price:
+        type: integer
+      product_id:
+        type: integer
+      qty:
+        type: integer
+    type: object
+  models.PosTopupDto:
+    properties:
+      bank_detail:
+        description: <-- nullable string
+        type: string
+      bill_location:
+        type: string
+      bill_no:
+        type: string
+      bill_payment_id:
+        type: string
+      cachier:
+        type: string
+      card_no:
+        type: string
+      card_type_id:
+        type: string
+      free_point:
+        type: integer
+      from_channel:
+        type: string
+      is_active:
+        type: boolean
+      member_tel:
+        type: string
+      pos_id:
+        type: string
+      pos_menu_id:
+        type: integer
+      pos_type:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/models.Products'
+        type: array
+    required:
+    - bill_location
+    - bill_payment_id
+    - cachier
+    - card_no
+    - card_type_id
+    - is_active
+    - member_tel
+    - pos_id
+    - pos_menu_id
+    - pos_type
+    - products
+    type: object
+  models.PosTransactionDto:
+    properties:
+      bank_detail:
+        type: string
+      bill_date:
+        type: string
+      bill_location:
+        type: string
+      bill_no:
+        type: string
+      bill_payment_id:
+        type: string
+      bill_status:
+        type: string
+      bonus_status:
+        type: string
+      card_no:
+        type: string
+      cashier:
+        type: string
+      e_bonus:
+        type: integer
+      e_coin:
+        type: integer
+      free_point:
+        type: integer
+      member_tel:
+        type: string
+      pos_id:
+        type: string
+      pos_type:
+        type: string
+      product_price:
+        type: integer
+      sub_transactions:
+        items:
+          $ref: '#/definitions/models.PosSubTransactionDto'
+        type: array
+    type: object
+  models.PosVoidDto:
+    properties:
+      bill_no:
+        type: string
+      card_no:
+        type: string
+      deduct_card:
+        type: boolean
+      void_reason:
+        type: string
+      void_user:
+        type: string
+    type: object
+  models.Products:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  models.RedeemJubuJibi:
+    properties:
+      cashier:
+        type: string
+      location:
+        type: string
+      member_tel:
+        type: string
+      pos_id:
+        type: string
+      redeem_price:
+        type: integer
+      sub_items:
+        items:
+          $ref: '#/definitions/models.RedeemSubJubuJibi'
+        type: array
+    type: object
+  models.RedeemSubJubuJibi:
+    properties:
+      joylicoin:
+        type: integer
+      price:
+        type: integer
+      product_name:
+        type: string
+      qty:
+        type: integer
+      sku:
+        type: string
+    type: object
+  models.RefundComfirmDto:
+    properties:
+      ref_card_no:
+        type: string
+      ref_member_tel:
+        type: string
+      refcon_ebonus:
+        type: integer
+      refcon_ecoin:
+        type: integer
+      refcon_location:
+        type: string
+      refcon_user:
+        type: string
+      refund_by:
+        type: string
+      req_id:
+        type: string
+    type: object
+  models.RefundRequestDto:
+    properties:
+      card_no:
+        type: string
+      refund_amount:
+        type: integer
+      refund_ebonus:
+        type: integer
+      refund_ecoin:
+        type: integer
+      refund_meter:
+        type: string
+      refund_tel:
+        type: string
+    type: object
+  models.ReturnBonusDto:
+    properties:
+      branch:
+        type: string
+      cashier:
+        type: string
+      estamp_baht:
+        type: integer
+      extra:
+        type: integer
+      final_point:
+        type: integer
+      joylicoin_return:
+        description: PointScan     *int64    `json:"point_scan"`
+        type: integer
+      member_ecoin:
+        type: integer
+      member_joylicoin:
+        type: integer
+      member_point:
+        description: |-
+          PointAdj      int     `json:"point_adj"`
+          BonusRedeem   int     `json:"bonus_redeem"`
+          Discount      float64 `json:"discount"`
+        type: integer
+      member_tel:
+        type: string
+      persent:
+        type: number
+      pos_id:
+        type: string
+      price_to_point:
+        type: number
+      total_spend:
+        type: integer
+    type: object
+  models.SearchClaimDetail:
+    properties:
+      endDate:
+        type: string
+      memberTel:
+        description: Location  string
+        type: string
+      startDate:
+        type: string
+    type: object
+  models.SearchClaimReport:
+    properties:
+      endDate:
+        type: string
+      location:
+        items:
+          type: string
+        type: array
+      memberTel:
+        type: string
+      page:
+        type: integer
+      skip:
+        type: integer
+      startDate:
+        type: string
+    type: object
+  models.SkillDto:
+    properties:
+      mskill1:
+        type: integer
+      mskill2:
+        type: integer
+      mskill3:
+        type: integer
+      mskill4:
+        type: integer
+      mskill5:
+        type: integer
+    type: object
+  models.TotalPointDto:
+    properties:
+      total_point:
+        type: integer
+    type: object
+  models.UnLockCardDto:
+    properties:
+      lock_id:
+        type: string
+      ref_card_entity_id:
+        type: string
+      unlock_by:
+        description: IsLock          bool       `json:"is_lock"`
+        type: string
+      unlock_location:
+        type: string
+      unlock_reason:
+        type: string
+    type: object
+  models.UserGroupDto:
+    properties:
+      branch_list:
+        items:
+          type: string
+        type: array
+      group_name:
+        type: string
+      is_active:
+        type: boolean
+    type: object
+  models.UserRoleDto:
+    properties:
+      is_active:
+        type: boolean
+      list_menu:
+        items:
+          type: string
+        type: array
+      role_description:
+        type: string
+    type: object
+  models.UsersCreateDto:
+    properties:
+      is_active:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      s_name:
+        type: string
+      status:
+        type: string
+      user_group_id:
+        type: integer
+      user_role_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  models.UsersUpdateDto:
+    properties:
+      is_active:
+        type: boolean
+      name:
+        type: string
+      new_password:
+        type: string
+      password:
+        type: string
+      s_name:
+        type: string
+      status:
+        type: string
+      user_group_id:
+        type: integer
+      user_role_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  utils.StandardErrorResponse:
+    properties:
+      data:
+        description: "null"
+      message:
+        example: Failed
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  utils.StandardSuccessResponse:
+    properties:
+      data: {}
+      message:
+        example: Success
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: This is a POS API with Gin and Swagger
+  title: New POS APIls
+  version: "1.0"
+paths:
+  /api/adjust-point:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Adjust Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AdjustPointDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: AdjustPoint
+      tags:
+      - AdjustPoint
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user and returns a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      summary: Login to get JWT token
+      tags:
+      - Auth
+  /api/bonus-setting:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get bonus setting
+      tags:
+      - Bonus Setting
+  /api/branch:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get branch all active
+      tags:
+      - Branch
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Branch Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.BranchDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new branch
+      tags:
+      - Branch
+  /api/branch-group:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get branch group all active
+      tags:
+      - Branch Group
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Branch Group Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosBranchGroupDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new branch group
+      tags:
+      - Branch Group
+  /api/branch-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete branch group by ID
+      tags:
+      - Branch Group
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get branch group by id
+      tags:
+      - Branch Group
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Branch group Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosBranchGroupDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update branch group by ID
+      tags:
+      - Branch Group
+  /api/branch-group/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get branch group list with paggination
+      tags:
+      - Branch Group
+  /api/branch/{code}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete branch by code
+      tags:
+      - Branch
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get branch by code
+      tags:
+      - Branch
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Branch Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.BranchDto'
+      - description: Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update branch by code
+      tags:
+      - Branch
+  /api/branch/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get branch list with paggination
+      tags:
+      - Branch
+  /api/card-play:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Card Play Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CardPlayDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new card play
+      tags:
+      - Card Play
+  /api/card-play-deduct:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Card Play Deduct Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CardPlayDeductDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Deduct card play balance
+      tags:
+      - Card Play
+  /api/card-play-verify:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Card Play Verify Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CardPlayVerifyDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Verify a card play
+      tags:
+      - Card Play
+  /api/card-type:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card type all active
+      tags:
+      - Card Type
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Card Type Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CardTypeDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new card type
+      tags:
+      - Card Type
+  /api/card-type/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete card type by ID
+      tags:
+      - Card Type
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card type by id
+      tags:
+      - Card Type
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Card Type Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CardTypeDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update card type by ID
+      tags:
+      - Card Type
+  /api/card-type/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card type list with paggination
+      tags:
+      - Card Type
+  /api/card/{cardNo}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: cardNo
+        in: path
+        name: cardNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete card entity permanently
+      tags:
+      - Card
+  /api/card/{memberTel}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve card entity by member telephone number and is active status
+      parameters:
+      - description: memberTel
+        in: path
+        name: memberTel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card by member tel
+      tags:
+      - Card
+  /api/card/{memberTel}/{cardNo}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: memberTel
+        in: path
+        name: memberTel
+        required: true
+        type: string
+      - description: cardNo
+        in: path
+        name: cardNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card by member tel and card no
+      tags:
+      - Card
+  /api/card/check/{cardNo}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: cardNo
+        in: path
+        name: cardNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card info by card number
+      tags:
+      - Card
+  /api/card/check/card-type/{cardNo}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: cardNo
+        in: path
+        name: cardNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card type by card number
+      tags:
+      - Card
+  /api/card/check/info/{cardNo}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: cardNo
+        in: path
+        name: cardNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card detail by card number
+      tags:
+      - Card
+  /api/card/check/package-info/{cardNo}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: cardNo
+        in: path
+        name: cardNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card package info by card number
+      tags:
+      - Card
+  /api/card/check/package/{cardNo}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: cardNo
+        in: path
+        name: cardNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card package detail by card number
+      tags:
+      - Card
+  /api/card/clear-card:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Clear card Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ClearCardDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Clear card entity by card number
+      tags:
+      - Card
+  /api/card/lock-card:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: lock card Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.LockCardDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Lock card entity
+      tags:
+      - Card
+  /api/card/member:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search by tel
+        in: query
+        name: tel
+        type: string
+      - description: Search by card no
+        in: query
+        name: cardNo
+        type: string
+      - description: Search lock status (true/false)
+        in: query
+        name: isLock
+        type: boolean
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card detail list by tel
+      tags:
+      - Card
+  /api/card/refund/{tel}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: tel
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card list refund by tel
+      tags:
+      - Card
+  /api/card/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Card Entity Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CardRegisterDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Register a new card
+      tags:
+      - Card
+  /api/card/tel/{tel}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: tel
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get card list by tel
+      tags:
+      - Card
+  /api/card/topup-pos:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Topup Card Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosTopupDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Topup card via POS
+      tags:
+      - Card
+  /api/card/transfer:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: transfer card Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.LogTransferCardDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Transfer card
+      tags:
+      - Card
+  /api/card/unlock-card:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: unlock card Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UnLockCardDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Unlock card entity
+      tags:
+      - Card
+  /api/claim:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Claim Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ReturnBonusDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Claim Joylicoin
+      tags:
+      - Claim
+  /api/claim-prize:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Claim prize Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ClaimPrizeDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new claim prize
+      tags:
+      - Claim Prize
+  /api/crm/branch/{branchCode}:
+    get:
+      consumes:
+      - application/json
+      description: Get Branch crm by code
+      parameters:
+      - description: Branch Code
+        in: path
+        name: branchCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Branch crm by code
+      tags:
+      - CRM
+  /api/crm/customer/{tel}:
+    get:
+      consumes:
+      - application/json
+      description: Get Customer crm by mobile number
+      parameters:
+      - description: Telephone Number
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Customer crm by mobile number
+      tags:
+      - CRM
+  /api/crm/score-type:
+    get:
+      consumes:
+      - application/json
+      description: Get score type crm
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get score type crm
+      tags:
+      - CRM
+  /api/customer-tier/{tel}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tel
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get customer tier by tel
+      tags:
+      - Customer Tier
+  /api/customer-tier/import:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Import customer tier from CSV or XLSX
+      parameters:
+      - description: CSV or XLSX file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Import customer tier
+      tags:
+      - Customer Tier
+  /api/customer-tier/import/first:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Import customer tier from CSV or XLSX
+      parameters:
+      - description: CSV or XLSX file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Import customer tier first time
+      tags:
+      - Customer Tier
+  /api/deposit-cron/{tel}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Telephone number
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get deposit head cron by tel
+      tags:
+      - Deposit Head
+  /api/discountcash/:member_tel:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DiscountCashDto'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      tags:
+      - Discount Cash
+  /api/group-menu:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get group menu all active
+      tags:
+      - Group Menu
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Group Menu Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.GroupMenuDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a group menu
+      tags:
+      - Group Menu
+  /api/group-menu/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete group menu by ID
+      tags:
+      - Group Menu
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get group menu by id
+      tags:
+      - Group Menu
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Group Menu Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.GroupMenuDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update group menu by ID
+      tags:
+      - Group Menu
+  /api/group-menu/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get group menu list with paggination
+      tags:
+      - Group Menu
+  /api/jubu-jibi/deposit:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Jubu jibi deposit Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DepositJubuJibi'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: JubuJibi Deposit
+      tags:
+      - JubuJibi
+  /api/jubu-jibi/redeem:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Jubu jibi redeem Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RedeemJubuJibi'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: JubuJibi Redeem
+      tags:
+      - JubuJibi
+  /api/logo:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get logo all active
+      tags:
+      - Logo
+  /api/machine-group:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get machine group all active
+      tags:
+      - Machine Group
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Machine Group Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.MachineGroupDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new bramachinench group
+      tags:
+      - Machine Group
+  /api/machine-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete machine group by ID
+      tags:
+      - Machine Group
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get machine group by id
+      tags:
+      - Machine Group
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Machine group Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.MachineGroupDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update machine group by ID
+      tags:
+      - Machine Group
+  /api/machine-group/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get machine group list with paggination
+      tags:
+      - Machine Group
+  /api/machine-group/sub/{groupId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: groupId
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get machine sub group by group id
+      tags:
+      - Machine Group
+  /api/machine-group/v1/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get machine group by id v1
+      tags:
+      - Machine Group
+  /api/master-action:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get master action all active
+      tags:
+      - Master Action
+  /api/master-payment:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get master payment all active
+      tags:
+      - Master Payment
+  /api/member:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Member Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.MemberDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new member
+      tags:
+      - Member
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Member Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.MemberDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update member by tel
+      tags:
+      - Member
+  /api/member/{tel}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tel
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get member by tel
+      tags:
+      - Member
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Skill Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SkillDto'
+      - description: Tel
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update member skill by tel
+      tags:
+      - Member
+  /api/member/deduct-joylicoin/{tel}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Joylicoin Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.JoylicoinDto'
+      - description: Tel
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Deduct joylicoin by tel
+      tags:
+      - Member
+  /api/member/deduct-totalpoint/{tel}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Total point data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.TotalPointDto'
+      - description: Tel
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Deduct point by tel
+      tags:
+      - Member
+  /api/member/name:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Member Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.MemberNameDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update member name by tel
+      tags:
+      - Member
+  /api/member/search-sync/{tel}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tel
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get member by tel
+      tags:
+      - Member
+  /api/meter-record/all-spend/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Meter Record all spend List
+      tags:
+      - Meter Record
+  /api/meter-record/check-card/export:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search card number
+        in: query
+        name: cardNo
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export check card list
+      tags:
+      - Meter Record
+  /api/meter-record/check-card/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search card number
+        in: query
+        name: cardNo
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Meter Record List with mobile number and start date
+      tags:
+      - Meter Record
+  /api/meter-record/jubu-jibi:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Meter Record Jubu Jibi
+      tags:
+      - Meter Record
+  /api/meter-record/jubu-jibi/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Meter Record Jubu Jibi List
+      tags:
+      - Meter Record
+  /api/meter-record/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Meter Record List with mobile number and start date
+      tags:
+      - Meter Record
+  /api/meter-record/prize-status/update:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update Meter Record after refund request
+      tags:
+      - Meter Record
+  /api/play-type:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get play type all active
+      tags:
+      - Play Type
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Play Type Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PlayTypeDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new card type
+      tags:
+      - Play Type
+  /api/play-type/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete play type by ID
+      tags:
+      - Play Type
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get play type by id
+      tags:
+      - Play Type
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Play Type Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PlayTypeDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update play type by ID
+      tags:
+      - Play Type
+  /api/play-type/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get play type list with paggination
+      tags:
+      - Play Type
+  /api/pos-menu:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: POS Menu
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosMenuDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new pos menu
+      tags:
+      - POS Menu
+  /api/pos-menu/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete pos menu by ID
+      tags:
+      - POS Menu
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos menu by id
+      tags:
+      - POS Menu
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Pos menu Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosMenuDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update pos menu by ID
+      tags:
+      - POS Menu
+  /api/pos-menu/group/{groupMenuId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: GroupMenuId
+        in: path
+        name: groupMenuId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos menu by group menu id and active
+      tags:
+      - POS Menu
+  /api/pos-menu/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text name or code
+        in: query
+        name: search
+        type: string
+      - description: Search group menu
+        in: query
+        name: groupMenuId
+        type: string
+      - description: Search branch group
+        in: query
+        name: branchGroupId
+        type: integer
+      - description: Search machine group
+        in: query
+        name: machineGroupId
+        type: integer
+      - description: Search card type
+        in: query
+        name: cardTypeId
+        type: string
+      - description: Search active status (true/false)
+        in: query
+        name: isActive
+        type: boolean
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos menu list with paggination
+      tags:
+      - POS Menu
+  /api/pos-menu/location/{location}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Location
+        in: path
+        name: location
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos menu by location and active
+      tags:
+      - POS Menu
+  /api/pos-menu/sale-all:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos menu sale all
+      tags:
+      - POS Menu
+  /api/pos-menu/sale/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text location code
+        in: query
+        name: location
+        type: string
+      - description: Search group menu
+        in: query
+        name: groupMenuId
+        type: string
+      - description: Search menu name
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos menu list with paggination by loaction and group menu
+      tags:
+      - POS Menu
+  /api/pos-sub-transaction/{billNo}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bill No
+        in: path
+        name: billNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos sub transaction by bill no
+      tags:
+      - POS Sub Transaction
+  /api/pos-transaction:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Pos Transaction Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosTransactionDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new pos transaction
+      tags:
+      - POS Transaction
+  /api/pos-transaction/gen-bill/{pos_id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: POS ID
+        in: path
+        name: pos_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get bill no by pos id
+      tags:
+      - POS Transaction
+  /api/pos-transaction/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search Bill number
+        in: query
+        name: billNo
+        type: string
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search card number
+        in: query
+        name: cardNo
+        type: string
+      - description: Search pos branch
+        in: query
+        name: posId
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos transaction list with paggination
+      tags:
+      - POS Transaction
+  /api/pos-transaction/sale-report:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search branch
+        in: query
+        name: location
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos sale report
+      tags:
+      - POS Transaction
+  /api/pos-void:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Pos Void Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosVoidDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new pos void
+      tags:
+      - POS Void
+  /api/prize-counter/jubu-jibi:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Prize Counter Record Jubu Jibi
+      tags:
+      - Prize Counter
+  /api/refund-confirm:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refund Confirm Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RefundComfirmDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new refund confirm
+      tags:
+      - Refund Confirm
+  /api/refund-request:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refund Request Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RefundRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new refund request
+      tags:
+      - Refund Request
+  /api/refund-request/{tel}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Telephone number
+        in: path
+        name: tel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get refund requests by telephone number
+      tags:
+      - Refund Request
+  /api/report/adjust-point/export:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search branch
+        in: query
+        name: location
+        type: string
+      - description: Export form (pdf, excel)
+        in: query
+        name: exportFormat
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export adjust point list
+      tags:
+      - Report
+  /api/report/adjust-point/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      tags:
+      - Report
+  /api/report/claim-prize/export:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ExportClaimPrizeParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export cliam prize
+      tags:
+      - Report
+  /api/report/claim-prize/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      tags:
+      - Report
+  /api/report/claim/detail:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SearchClaimDetail'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get claim detail
+      tags:
+      - Report
+  /api/report/claim/export:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ExportClaimReport'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export claim list
+      tags:
+      - Report
+  /api/report/claim/list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SearchClaimReport'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get claim joylicoin report
+      tags:
+      - Report
+  /api/report/clear-card/export:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ExportClearCardReport'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export clear card list
+      tags:
+      - Report
+  /api/report/clear-card/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search branch
+        in: query
+        name: location
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get clear card list with paggination
+      tags:
+      - Report
+  /api/report/pos-daily/summary:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      tags:
+      - Report
+  /api/report/pos-daily/summary/export:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export POS daily sales summary
+      tags:
+      - Report
+  /api/report/pos-monthly/summary:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      tags:
+      - Report
+  /api/report/pos-sale/payment:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search location
+        in: query
+        name: location
+        type: string
+      - description: Search payment id
+        in: query
+        name: paymentId
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      tags:
+      - Report
+  /api/report/pos-sale/payment/export:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ExportPosSalePaymentReport'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export POS sale report by payment
+      tags:
+      - Report
+  /api/report/spending/export:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search date from end date
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export spending list
+      tags:
+      - Report
+  /api/report/spending/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos transaction accumulated spending by member tel
+      tags:
+      - Report
+  /api/report/stamp-house/export:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search branch
+        in: query
+        name: location
+        type: string
+      - description: Search stamp machine code
+        in: query
+        name: machine
+        type: string
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search date from end date
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export stamp point list
+      tags:
+      - Report
+  /api/report/stamp-house/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search branch
+        in: query
+        name: location
+        type: string
+      - description: Search stamp machine code
+        in: query
+        name: machine
+        type: string
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      - description: Search date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get stamp house list with paggination
+      tags:
+      - Report
+  /api/report/tax-invoice/export:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search branch
+        in: query
+        name: location
+        type: string
+      - description: Export form (pdf, excel)
+        in: query
+        name: exportFormat
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Export pos tax invoice list
+      tags:
+      - Report
+  /api/report/tax-invoice/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search branch
+        in: query
+        name: location
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos tax invoice list with paggination
+      tags:
+      - Report
+  /api/report/void/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search branch
+        in: query
+        name: location
+        type: string
+      - description: Search bill date from start date
+        in: query
+        name: startDate
+        type: string
+      - description: Search bill date from end date
+        in: query
+        name: endDate
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get pos void list with paggination
+      tags:
+      - Report
+  /api/stamp-house/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search member tel
+        in: query
+        name: memberTel
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get Stamp point List with mobile number and start date
+      tags:
+      - Stamp House
+  /api/stamp-machine:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get stamp machine all active
+      tags:
+      - Stamp Machine
+  /api/station:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Station Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosStationDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new station
+      tags:
+      - Station
+  /api/station/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete station by id
+      tags:
+      - Station
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get station by id
+      tags:
+      - Station
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Station Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PosStationDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update station by id
+      tags:
+      - Station
+  /api/station/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text code or description
+        in: query
+        name: search
+        type: string
+      - description: Search by mac address
+        in: query
+        name: macAddress
+        type: string
+      - description: Search by location
+        in: query
+        name: location
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get station list with paggination
+      tags:
+      - Station
+  /api/station/location/{location}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Location
+        in: path
+        name: location
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get station by location
+      tags:
+      - Station
+  /api/station/mac-address-list:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Mac Address Array
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.MacAddressList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get station by mac address list
+      tags:
+      - Station
+  /api/station/mac-address/{macAddress}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: MacAddress
+        in: path
+        name: macAddress
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get station by mac address
+      tags:
+      - Station
+  /api/user:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UsersCreateDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new user
+      tags:
+      - User
+  /api/user-group:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get user group all active
+      tags:
+      - User Group
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User Group Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserGroupDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new user group
+      tags:
+      - User Group
+  /api/user-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete user group by ID
+      tags:
+      - User Group
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get user group by id
+      tags:
+      - User Group
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User group Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserGroupDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update user group by ID
+      tags:
+      - User Group
+  /api/user-group/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get user group list with paggination
+      tags:
+      - User Group
+  /api/user-role:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get user role all active
+      tags:
+      - User Role
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User role Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserRoleDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Create a new user role
+      tags:
+      - User Role
+  /api/user-role/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete user role by ID
+      tags:
+      - User Role
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get user role by id
+      tags:
+      - User Role
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User role Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserRoleDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update user role by ID
+      tags:
+      - User Role
+  /api/user-role/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get user role list with paggination
+      tags:
+      - User Role
+  /api/user/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Delete user by ID
+      tags:
+      - User
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get user by id
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User Data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UsersUpdateDto'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Update user by ID
+      tags:
+      - User
+  /api/user/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Search text
+        in: query
+        name: search
+        type: string
+      - description: Username text
+        in: query
+        name: username
+        type: string
+      - description: UserRoleId
+        in: query
+        name: userRoleId
+        type: string
+      - description: UserGroupId
+        in: query
+        name: userGroupId
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get user list with paggination
+      tags:
+      - User
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: Get all users with Bearer token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - User
+  /api/users/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Get users by username with Bearer token
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.StandardSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Get users by username
+      tags:
+      - User
+  /api/v2/verify-card:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verify Card Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model_v2.VerifyCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model_v2.VerifyCardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Verify card information V2
+      tags:
+      - V2
+  /api/v2/verify-card-smc:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verify Card Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model_v2.VerifyCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model_v2.VerifyCardSmcResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Verify card information and SMC
+      tags:
+      - V2
+securityDefinitions:
+  BasicAuth:
+    type: basic
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
