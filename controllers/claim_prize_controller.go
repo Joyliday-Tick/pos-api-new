@@ -198,41 +198,33 @@ func handleClaimOption(option int, req models.ClaimPrizeDto, userId int, id stri
 			return fmt.Errorf("failed to fetch card deposit: %v", err)
 		}
 
-		deducts, updates := applyCardWithdrawClaim(req, cardDeposits)
-
-		var wg sync.WaitGroup
-		errChan := make(chan error, len(deducts)+len(updates))
-
-		for _, wt := range deducts {
-			wg.Add(1)
-			go func(w models.CardWithdrawDto) {
-				defer wg.Done()
-				if _, err := services.CreateCardWithdraw(w, userId); err != nil {
-					errChan <- fmt.Errorf("create withdraw failed: %v", err)
-				}
-			}(wt)
+		deducts, updates, err := applyCardWithdrawClaim(req, cardDeposits)
+		if err != nil {
+			return err
 		}
 
-		for _, up := range updates {
-			wg.Add(1)
-			go func(u models.CardDepositBalanceDto) {
-				defer wg.Done()
-				if _, err := services.UpdateCardDepositBalance(u); err != nil {
-					errChan <- fmt.Errorf("update balance failed: %v", err)
-				}
-			}(up)
-		}
+		// เดิมยิง withdraw ทั้งชุดใน goroutine ชุดหนึ่ง และหักยอดทั้งชุดในอีกชุดหนึ่ง
+		// ขนานกันโดยไม่รู้จักกันเลย ทั้งที่ deducts[i] กับ updates[i] คือรายการเดียวกัน
+		// ถ้าหักยอดล้มเหลวแต่ withdraw สำเร็จ จะได้ร่องรอยว่า "หักไปแล้ว" ทั้งที่ยอดไม่ลด
+		// และ error ทั้งหมดถูกเก็บไว้รายงานตอนท้าย ไม่มีใครหยุดใคร ทุกตัว commit หมด
+		//
+		// ตอนนี้ทำทีละคู่และเรียงกัน: หักยอดก่อน (เป็นตัวเงินจริง) แล้วค่อยลง withdraw
+		// เจอ error เมื่อไหร่หยุดทันที ไม่เดินต่อ
+		for i := range updates {
+			if _, err := services.UpdateCardDepositBalance(updates[i]); err != nil {
+				return fmt.Errorf("หักยอดในบัตรไม่สำเร็จ (รายการที่ %d จาก %d): %w",
+					i+1, len(updates), err)
+			}
 
-		wg.Wait()
-		close(errChan)
-
-		var allErr []string
-		for e := range errChan {
-			allErr = append(allErr, e.Error())
-		}
-
-		if len(allErr) > 0 {
-			return fmt.Errorf("%s", strings.Join(allErr, " | "))
+			if _, err := services.CreateCardWithdraw(deducts[i], userId); err != nil {
+				// ยอดถูกหักไปแล้วแต่ลงร่องรอยไม่ได้ ตัวเงินถูกต้องแต่ audit trail ขาด
+				// ต้องดังไว้ ไม่ใช่กลืนหาย
+				fmt.Printf("[CLAIM] card_no=%s deposit=%v: หักยอดสำเร็จแล้วแต่สร้าง card_withdraw "+
+					"ไม่สำเร็จ: %v — ยอดในบัตรถูกต้องแล้ว แต่ไม่มีร่องรอยการหัก ต้องบันทึกย้อนหลัง\n",
+					*req.CardNo, updates[i].ID, err)
+				return fmt.Errorf("บันทึกร่องรอยการหักยอดไม่สำเร็จ (รายการที่ %d จาก %d): %w",
+					i+1, len(updates), err)
+			}
 		}
 
 		return nil
@@ -242,7 +234,15 @@ func handleClaimOption(option int, req models.ClaimPrizeDto, userId int, id stri
 	}
 }
 
-func applyCardWithdrawClaim(req models.ClaimPrizeDto, deposits []models.CardDeposit) ([]models.CardWithdrawDto, []models.CardDepositBalanceDto) {
+// applyCardWithdrawClaim คืน (รายการ withdraw, รายการหักยอด, error)
+//
+// deducts[i] กับ updateCardDeposits[i] เป็นคู่กันเสมอ เพราะถูก append
+// ในรอบลูปเดียวกัน ผู้เรียกต้องจับคู่ตาม index และรันเรียงกัน
+//
+// error จะไม่เป็น nil เมื่อยอดในบัตรรวมกันแล้วไม่พอกับที่ขอแลก
+// เดิมฟังก์ชันนี้วนหักเท่าที่มีแล้วจบ ไม่บอกใครว่าหักไม่ครบ ผู้เรียกก็ไม่ได้เช็ค
+// ผลคือแลกของรางวัลที่ราคาสูงกว่ายอดในบัตรได้ โดยหักไปเท่าที่มี
+func applyCardWithdrawClaim(req models.ClaimPrizeDto, deposits []models.CardDeposit) ([]models.CardWithdrawDto, []models.CardDepositBalanceDto, error) {
 	var deducts []models.CardWithdrawDto
 	var updateCardDeposits []models.CardDepositBalanceDto
 
@@ -315,9 +315,15 @@ func applyCardWithdrawClaim(req models.ClaimPrizeDto, deposits []models.CardDepo
 			})
 		}
 
+		// เหลือค้างแปลว่ายอดในบัตรไม่พอ ต้องไม่ให้ทำรายการต่อ
+		if e_coin > 0 || e_bonus > 0 {
+			return nil, nil, fmt.Errorf(
+				"ยอดในบัตร %s ไม่พอสำหรับการแลกครั้งนี้ (ขาด e_coin %d, e_bonus %d)",
+				*req.CardNo, e_coin, e_bonus)
+		}
 	}
 
-	return deducts, updateCardDeposits
+	return deducts, updateCardDeposits, nil
 }
 func parallelSync(scores models.ScoreMember, req models.ClaimPrizeDto, id string) error {
 	var wg sync.WaitGroup

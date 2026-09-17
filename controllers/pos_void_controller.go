@@ -9,7 +9,6 @@ import (
 	"new-pos-api/utils"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/sync/errgroup"
 )
 
 // @Summary Create a new pos void
@@ -37,6 +36,36 @@ func CreatePosVoid(c *gin.Context) {
 	}
 	if existTransaction == nil {
 		utils.Error(c, http.StatusBadRequest, fmt.Sprintf("billNo %s not found", req.BillNo))
+		return
+	}
+
+	// ---------------------------------------------------------------------
+	// เช็คว่าบิลนี้ถูก void ไปแล้วหรือยัง — ต้องอยู่ตรงนี้ ก่อนทุกอย่าง
+	//
+	// เดิมเช็คนี้อยู่ข้างใน goroutine ตัวที่ 1 เท่านั้น และผลของมันถูกใช้แค่
+	// ตัดสินใจว่าจะสร้างแถว pos_void ไหม ส่วน goroutine 2/3/4 ไม่เคยเห็นค่านั้นเลย
+	// กด void ซ้ำจึงได้: ไม่สร้าง pos_void ซ้ำ (ดูเหมือนปลอดภัย) แต่ goroutine 3
+	// ยังรัน balance_coin = balance_coin - 500 บนบัตรที่เหลือ 0 อยู่แล้ว -> ติดลบ
+	// และ goroutine 4 ยังหักคะแนนสมาชิกซ้ำอีกรอบ
+	//
+	// เกิดง่ายมากเพราะ goroutine 4 คุยกับ CRM ข้างนอก ถ้า CRM timeout g.Wait()
+	// จะคืน error -> POS ขึ้น 500 "ล้มเหลว" ทั้งที่ยอดถูกหักไปเรียบร้อยแล้ว
+	// แคชเชียร์เห็นล้มเหลวก็กดซ้ำ กดสามครั้งยอดติดลบสองเท่า
+	// ---------------------------------------------------------------------
+	existVoid, err := services.FindExistVoidByBillNo(req.BillNo)
+	if err != nil {
+		utils.Error(c, http.StatusInternalServerError, fmt.Errorf("failed to find pos void: %w", err).Error())
+		return
+	}
+	if existVoid != nil {
+		// 409 ไม่ใช่ 500 — นี่ไม่ใช่ความผิดพลาดของระบบ แต่เป็นบิลที่ยกเลิกไปแล้ว
+		// ต้องบอกให้ชัดเพื่อไม่ให้แคชเชียร์กดซ้ำอีก
+		utils.Error(c, http.StatusConflict, fmt.Sprintf(
+			"บิล %s ถูกยกเลิกไปแล้วเมื่อ %s โดย %s — ไม่ต้องยกเลิกซ้ำ "+
+				"ถ้ายอดในบัตรยังดูไม่ถูกต้อง ให้ตรวจสอบก่อน อย่ากดยกเลิกอีก",
+			req.BillNo,
+			existVoid.VoidDate.Format("2006-01-02 15:04:05"),
+			existVoid.VoidUser))
 		return
 	}
 
@@ -107,37 +136,44 @@ func CreatePosVoid(c *gin.Context) {
 		req.VoidReason = "U-" + req.VoidReason
 	}
 
-	var posVoid models.PosVoid
-	g := new(errgroup.Group)
+	// ---------------------------------------------------------------------
+	// เดิมสี่ขั้นตอนนี้รันขนานกันด้วย errgroup.Group (ไม่ใช่ WithContext)
+	// ซึ่งแปลว่า goroutine ตัวหนึ่งพังไม่ได้ยกเลิกตัวอื่น ทุกตัววิ่งจนจบและ commit หมด
+	// ผลคือ: ขั้นหักยอด deposit พังกลางคัน (คืนได้ 1 จาก 3 ก้อน) แต่บิลยังถูก mark
+	// เป็น VOID และคะแนน CRM ก็ถูกหักไปแล้ว บัญชีบอกว่ากลับรายการครบ
+	// ส่วนลูกค้ายังถือ coin ค้างอยู่
+	//
+	// เปลี่ยนเป็นรันตามลำดับ ขั้นไหนพัง ขั้นถัดไปไม่ทำงาน
+	// ความขนานตรงนี้ไม่ได้ช่วยอะไรเลย (คนละไม่กี่ query) แต่แลกมาด้วยความถูกต้อง
+	//
+	// ลำดับสำคัญ:
+	//   1. จองบิลด้วย pos_void ก่อน   กันยิงซ้ำ/ยิงพร้อมกัน
+	//   2. คืนยอดในบัตร               ส่วนที่เป็นเงิน
+	//   3. mark บิลเป็น VOID
+	//   4. คะแนน CRM + ลบประวัติ      ระบบข้างนอก rollback ไม่ได้ จึงไว้ท้ายสุด
+	//
+	// ถ้าขั้น 2 พัง จะถอนการจองขั้น 1 คืน เพื่อให้ยกเลิกใหม่ได้สะอาด
+	// ถ้าขั้น 3 หรือ 4 พัง จะไม่ถอน เพราะยอดถูกคืนไปแล้ว การยกเลิกซ้ำจะหักซ้ำ
+	// ---------------------------------------------------------------------
 
-	// goroutine 1: สร้าง pos void
-	g.Go(func() error {
-		existVoid, err := services.FindExistVoidByBillNo(req.BillNo)
-		if err != nil {
-			return fmt.Errorf("failed to find pos void: %w", err)
+	// ขั้น 1: จองบิล
+	posVoid, err := services.CreatePosVoid(req)
+	if err != nil {
+		utils.Error(c, http.StatusInternalServerError, fmt.Errorf("failed to create pos void: %w", err).Error())
+		return
+	}
+
+	// ถอนการจองคืนเมื่อขั้นคืนยอดล้มเหลว
+	releaseClaim := func(reason string) {
+		if delErr := services.DeletePosVoidByID(posVoid.VoidID); delErr != nil {
+			fmt.Printf("[VOID] bill_no=%s: %s และถอนการจอง pos_void ไม่สำเร็จด้วย: %v "+
+				"— ต้องลบแถว void_id=%s ด้วยมือ ไม่งั้นบิลนี้จะยกเลิกใหม่ไม่ได้\n",
+				req.BillNo, reason, delErr, posVoid.VoidID)
 		}
+	}
 
-		if existVoid == nil {
-			v, err := services.CreatePosVoid(req)
-			if err != nil {
-				return fmt.Errorf("failed to create pos void: %w", err)
-			}
-			posVoid = v
-		}
-		return nil
-	})
-
-	// goroutine 2: update transaction status
-	g.Go(func() error {
-		_, err := services.UpdatePosTransactionStatus(req.BillNo, services.TRANSACTION_TYPE_VOID, userId)
-		if err != nil {
-			return fmt.Errorf("failed to update transaction status: %w", err)
-		}
-		return nil
-	})
-
-	// goroutine 3: process card / not card
-	g.Go(func() error {
+	// ขั้น 2: คืนยอดในบัตร
+	if err := func() error {
 		if req.CardNo != "" {
 			switch cardType {
 			case "Time play":
@@ -194,10 +230,27 @@ func CreatePosVoid(c *gin.Context) {
 			}
 		}
 		return nil
-	})
+	}(); err != nil {
+		// ยอดยังไม่ถูกคืน (หรือคืนไปบางส่วน) ถอนการจองเพื่อให้ลองใหม่ได้
+		releaseClaim(fmt.Sprintf("คืนยอดไม่สำเร็จ: %v", err))
+		utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+			"%v (บิล %s: ยอดอาจถูกคืนไปบางส่วน ตรวจยอดในบัตรก่อนยกเลิกซ้ำ)", err, req.BillNo))
+		return
+	}
 
-	// goroutine 4: update points & sync
-	g.Go(func() error {
+	// ขั้น 3: mark บิลเป็น VOID
+	// ถึงตรงนี้ยอดถูกคืนแล้ว ห้ามถอนการจองอีก ไม่งั้นยกเลิกซ้ำจะคืนยอดซ้ำ
+	if _, err := services.UpdatePosTransactionStatus(req.BillNo, services.TRANSACTION_TYPE_VOID, userId); err != nil {
+		fmt.Printf("[VOID] bill_no=%s: คืนยอดในบัตรสำเร็จแล้ว แต่ mark บิลเป็น VOID ไม่สำเร็จ: %v "+
+			"— ห้ามยกเลิกซ้ำ ต้องแก้สถานะบิลด้วยมือ\n", req.BillNo, err)
+		utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+			"failed to update transaction status: %v (บิล %s: ยอดถูกคืนเข้าบัตรแล้ว "+
+				"ห้ามกดยกเลิกซ้ำ แจ้งผู้ดูแลระบบให้แก้สถานะบิล)", err, req.BillNo))
+		return
+	}
+
+	// ขั้น 4: คะแนน CRM + ลบประวัติ — ระบบข้างนอก ไว้ท้ายสุดเพราะ rollback ไม่ได้
+	if err := func() error {
 		if existTransaction.FreePoint > 0 {
 			deductPoint := -existTransaction.FreePoint
 			member, err := services.UpdatePoint(deductPoint, existTransaction.MemberTel)
@@ -238,10 +291,16 @@ func CreatePosVoid(c *gin.Context) {
 			}
 		}
 		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		utils.Error(c, http.StatusInternalServerError, err.Error())
+	}(); err != nil {
+		// จุดนี้คือสาเหตุหลักที่ทำให้เกิดการกดยกเลิกซ้ำมาตลอด: CRM timeout
+		// แล้วทั้งคำขอตอบ 500 ทั้งที่ยอดในบัตรถูกคืนเรียบร้อยแล้ว
+		// ตอนนี้บิลถูกจองไว้แล้ว การกดซ้ำจะโดน 409 ปฏิเสธ ไม่หักซ้ำอีก
+		fmt.Printf("[VOID] bill_no=%s: ยกเลิกบิลในระบบ POS สำเร็จครบแล้ว "+
+			"แต่ซิงก์คะแนนกับ CRM ไม่สำเร็จ: %v — ต้องปรับคะแนนสมาชิก %s ด้วยมือ\n",
+			req.BillNo, err, existTransaction.MemberTel)
+		utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+			"%v (บิล %s: ยกเลิกในระบบ POS เรียบร้อยแล้ว ยอดในบัตรถูกคืนถูกต้อง "+
+				"เหลือแค่คะแนนสมาชิกที่ยังไม่ซิงก์ ห้ามกดยกเลิกซ้ำ)", err, req.BillNo))
 		return
 	}
 
