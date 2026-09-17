@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -13,6 +14,15 @@ import (
 	// "new-pos-api/utils"
 	// "gorm.io/gorm"
 )
+
+// ErrInsufficientDepositBalance คืนเมื่อ UPDATE ไม่โดนแถวไหนเลย แปลว่ายอดคงเหลือ
+// ไม่พอให้หัก หรือแถวนั้นหายไป/ถูกปิดไปแล้ว ผู้เรียกต้องถือว่า "ยังไม่ได้หัก"
+// และห้ามถือว่าสำเร็จ
+var ErrInsufficientDepositBalance = errors.New("ยอดคงเหลือในกระเป๋าไม่พอสำหรับการหักครั้งนี้")
+
+// ErrNegativeDeduction กันการส่งจำนวนติดลบเข้ามาหัก ซึ่ง SQL จะกลายเป็นการบวกเพิ่ม
+// เท่ากับเสกยอดขึ้นมาจากอากาศ
+var ErrNegativeDeduction = errors.New("จำนวนที่ขอหักติดลบ")
 
 func CreateCardDeposit(input models.CardDepositDto, userId int) (models.CardDeposit, error) {
 	var deposit models.CardDeposit
@@ -158,10 +168,62 @@ func UpdateCardDepositBalance(input models.CardDepositBalanceDto) (models.CardDe
 	if config.DB_POS == nil {
 		return input, fmt.Errorf("database pos connection is nil")
 	}
+	if input.ID == nil {
+		return input, fmt.Errorf("card deposit id is nil")
+	}
+
+	// BalanceDiscountCash เป็น *float32 และ 7 ใน 8 จุดที่สร้าง CardDepositBalanceDto
+	// ไม่ได้ตั้งค่านี้ (void, claim-prize, refund) ค่าที่ bind จึงเป็น NULL
+	// คอลัมน์ balance_discount_cash เป็น nullable ฐานข้อมูลจึงไม่ error
+	// แต่ balance_discount_cash - NULL = NULL ยอดส่วนลดหายไปเงียบ ๆ และเมื่อเป็น NULL
+	// แล้วทุกการคำนวณต่อจากนั้นก็เป็น NULL ตลอด ส่วน SUM() ในรายงานก็ข้ามแถวนั้นไป
+	// ตรวจ UAT เมื่อ 2026-09-17 พบเกิดไปแล้ว 9 แถวจาก 2678
+	// nil ต้องแปลว่า "ไม่มีส่วนลดให้หัก" = 0 ไม่ใช่ NULL
+	var discountCash float32
+	if input.BalanceDiscountCash != nil {
+		discountCash = *input.BalanceDiscountCash
+	}
+
+	// จำนวนติดลบจะกลายเป็นการบวกเพิ่ม (x - (-5) = x + 5) และ guard ด้านล่างก็ผ่านเสมอ
+	// เพราะ balance >= จำนวนติดลบ เป็นจริงตลอด ต้องกันตั้งแต่ต้นทาง
+	if input.BalanceCoin < 0 || input.BalanceBonus < 0 || discountCash < 0 {
+		return input, fmt.Errorf("%w: coin=%d bonus=%d discount_cash=%v",
+			ErrNegativeDeduction, input.BalanceCoin, input.BalanceBonus, discountCash)
+	}
+
 	updateDate := utils.TimeNowAsia()
-	result := config.DB_POS.Exec("UPDATE card_deposit SET balance_coin = balance_coin  - ?, balance_bonus = balance_bonus - ?,	 balance_discount_cash = balance_discount_cash - ?, update_date = ? WHERE id = ?", input.BalanceCoin, input.BalanceBonus, &input.BalanceDiscountCash, updateDate, &input.ID)
+
+	// เงื่อนไข "ยอดพอไหม" ต้องอยู่ใน WHERE ไม่ใช่เช็คใน Go แล้วค่อยเขียน
+	// เดิมอ่านยอดที่ card_play_service.go:778-797 แล้วมา UPDATE ที่นี่ คนละ connection
+	// ไม่มี transaction ไม่มี FOR UPDATE — กดสองครั้งห่างกัน 50ms ทั้งคู่อ่านเห็นยอดพอ
+	// แล้วต่างคนต่างหัก ยอดติดลบ ลูกค้าได้เล่นสองรอบจากยอดรอบเดียว
+	// ตรวจ UAT เมื่อ 2026-09-17 พบ balance_coin ติดลบ 5 แถว balance_bonus ติดลบ 1 แถว
+	// ย้ายเงื่อนไขเข้า WHERE แล้วเช็ค RowsAffected ทำให้ atomic ในคำสั่งเดียว
+	// โดยไม่ต้องล็อกแถว และแก้ทั้ง double-spend กับ void ซ้ำพร้อมกัน
+	//
+	// COALESCE เพราะทั้งสามคอลัมน์เป็น nullable ถ้าเจอแถวที่เป็น NULL อยู่ก่อนแล้ว
+	// NULL >= ? จะได้ NULL ซึ่งไม่ใช่ true — แถวนั้นจะหักไม่ได้ตลอดกาล
+	result := config.DB_POS.Exec(`
+		UPDATE card_deposit
+		SET balance_coin          = COALESCE(balance_coin, 0) - ?,
+		    balance_bonus         = COALESCE(balance_bonus, 0) - ?,
+		    balance_discount_cash = COALESCE(balance_discount_cash, 0) - ?,
+		    update_date           = ?
+		WHERE id = ?
+		  AND COALESCE(balance_coin, 0)          >= ?
+		  AND COALESCE(balance_bonus, 0)         >= ?
+		  AND COALESCE(balance_discount_cash, 0) >= ?`,
+		input.BalanceCoin, input.BalanceBonus, discountCash, updateDate, input.ID,
+		input.BalanceCoin, input.BalanceBonus, discountCash)
 	if result.Error != nil {
 		return input, fmt.Errorf("failed to update card deposit balance: %w", result.Error)
+	}
+
+	// RowsAffected == 0 แปลว่ายอดไม่พอ หรือไม่มีแถวนั้น — ไม่ได้หักอะไรเลย
+	// ต้องคืน error ไม่ใช่ปล่อยผ่านเหมือนเดิม ไม่งั้นเครื่องจะปลดล็อกให้เล่นฟรี
+	if result.RowsAffected == 0 {
+		return input, fmt.Errorf("%w (card_deposit id=%s ขอหัก coin=%d bonus=%d discount_cash=%v)",
+			ErrInsufficientDepositBalance, input.ID, input.BalanceCoin, input.BalanceBonus, discountCash)
 	}
 	// ปิด card play เมื่อยอดเหลือ 0
 	// เดิมเงื่อนไขกลับด้าน (if err != nil) บล็อกนี้จึงทำงานเฉพาะตอน query ล้มเหลว
