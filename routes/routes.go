@@ -19,10 +19,10 @@ func SetupRouter(r *gin.Engine) {
 	api.GET("/users", controllers.GetUsers)
 	api.GET("/users/:username", controllers.GetUsersByUsername)
 	api.GET("/user/list", controllers.SearchUserList)
-	api.POST("/user", controllers.CreateUser)
-	api.PUT("/user/:id", controllers.UpdateUser)
+	api.POST("/user", middlewares.RequireRole(middlewares.RoleAdministrator), controllers.CreateUser)
+	api.PUT("/user/:id", middlewares.RequireRole(middlewares.RoleAdministrator), controllers.UpdateUser)
 	api.GET("/user/:id", controllers.GetUserById)
-	api.DELETE("/user/:id", controllers.DeleteUserById)
+	api.DELETE("/user/:id", middlewares.RequireRole(middlewares.RoleAdministrator), controllers.DeleteUserById)
 
 	api.POST("/auth/login", controllers.Login)
 
@@ -64,7 +64,7 @@ func SetupRouter(r *gin.Engine) {
 	api.POST("/card/transfer", controllers.TransferCard)
 
 	// DELETE
-	api.DELETE("card/:cardNo", controllers.DeleteCardEntityPermanent)
+	api.DELETE("card/:cardNo", middlewares.RequireRole(middlewares.RoleAdministrator, middlewares.RoleRMBackoffice, middlewares.RoleManager, middlewares.RoleAssistManager), controllers.DeleteCardEntityPermanent)
 
 	//*card play *//
 	api.POST("/card-play", controllers.CreateCardPlay)
@@ -139,7 +139,7 @@ func SetupRouter(r *gin.Engine) {
 	api.GET("/pos-sub-transaction/:billNo", controllers.GetPosSubTransactionByBillNo)
 
 	//*pos void*//
-	api.POST("/pos-void", controllers.CreatePosVoid)
+	api.POST("/pos-void", middlewares.RequireRole(middlewares.RoleAdministrator, middlewares.RoleRMBackoffice, middlewares.RoleManager, middlewares.RoleAssistManager), controllers.CreatePosVoid)
 
 	//*bonus setting*//
 	api.GET("/bonus-setting", controllers.GetBonusSetting)
@@ -178,10 +178,10 @@ func SetupRouter(r *gin.Engine) {
 	//*user role*//
 	api.GET("/user-role", controllers.GetUserRoleList)
 	api.GET("/user-role/list", controllers.SearchUserRoleList)
-	api.POST("/user-role", controllers.CreateUserRole)
-	api.PUT("/user-role/:id", controllers.UpdateUserRole)
+	api.POST("/user-role", middlewares.RequireRole(middlewares.RoleAdministrator), controllers.CreateUserRole)
+	api.PUT("/user-role/:id", middlewares.RequireRole(middlewares.RoleAdministrator), controllers.UpdateUserRole)
 	api.GET("/user-role/:id", controllers.GetUserRoleById)
-	api.DELETE("/user-role/:id", controllers.DeleteUserRoleById)
+	api.DELETE("/user-role/:id", middlewares.RequireRole(middlewares.RoleAdministrator), controllers.DeleteUserRoleById)
 
 	//*master logo*//
 	api.GET("/logo", controllers.GetLogoList)
@@ -217,7 +217,7 @@ func SetupRouter(r *gin.Engine) {
 	api.GET("/stamp-machine", controllers.GetStampMachineList)
 
 	//*adjust point*//
-	api.POST("/adjust-point", controllers.CreateAdjustPoint)
+	api.POST("/adjust-point", middlewares.RequireRole(middlewares.RoleAdministrator, middlewares.RoleRMBackoffice, middlewares.RoleManager, middlewares.RoleAssistManager), controllers.CreateAdjustPoint)
 
 	//*machine group*//
 	api.GET("/machine-group/v1/:id", controllers.GetMachineGroupByIdV1)
@@ -239,7 +239,7 @@ func SetupRouter(r *gin.Engine) {
 	api.GET("/deposit-cron/:tel", controllers.GetDepositCronByTel)
 
 	//*refund confirm*//
-	api.POST("/refund-confirm", controllers.CreateRefundConfirm)
+	api.POST("/refund-confirm", middlewares.RequireRole(middlewares.RoleAdministrator, middlewares.RoleRMBackoffice, middlewares.RoleManager, middlewares.RoleAssistManager), controllers.CreateRefundConfirm)
 
 	//*master action*//
 	api.GET("/master-action", controllers.GetMasterActionList)
