@@ -220,15 +220,35 @@ func DeductCardPlay(input models.CardPlayDeductDto, userId int) ([]Deposit, erro
 	}
 
 	// deduct card play type used
+	//
+	// งานเดียวของขั้นตอนนี้คือเพิ่มตัวนับ used_time ใน card_play_type
+	//
+	// เดิมมีการ append เข้า Withdraws ต่อท้ายตรงนี้ด้วย โดยใส่ cpt.CardPlayId
+	// ซึ่งเป็น card_play.id ลงช่องที่ปลายทางเอาไปใช้เป็น card_deposit.id
+	// (UpdateCardDepositBalance ทำ UPDATE card_deposit WHERE id = ?)
+	// และใส่จำนวนเป็น 0 ทั้ง coin และ bonus จึงไม่เคยหักอะไรได้เลยตั้งแต่ต้น
+	//
+	// ตอนที่ UpdateCardDepositBalance ยังไม่เช็ค RowsAffected แถวนี้ไม่มีพิษภัย
+	// UPDATE ไม่โดนแถวไหนแล้วเงียบผ่านไป ส่วน CreateCardWithdraw ก็ลงแถวได้
+	// เพราะ card_withdraw.card_deposit_id ไม่มี foreign key
+	// (ตรวจ UAT 2026-09-17: มีแถวขยะแบบนี้สะสมอยู่ 221 แถว และไม่มี card_deposit
+	//  สักแถวที่ id ตรงกับ card_play.id เลย — 0 จาก 2678)
+	//
+	// พอเพิ่ม guard RowsAffected == 0 -> error เข้าไปใน aff52a5 แถวนี้กลายเป็น
+	// สมาชิกตัวแรกของ Withdraws ที่คืน error เสมอ ลูปจึง return ตั้งแต่รอบแรก
+	// และรายการที่ต้องหักจริงไม่เคยถูกแตะ ผู้เรียกที่ v2/card_entity_controller.go
+	// รันแบบ fire-and-forget หลังตอบ success ให้เครื่องไปแล้ว
+	// ผลคือบัตร Package และ Time-play ทุกใบเล่นฟรีโดยไม่มีใครรู้
+	//
+	// ห้ามใส่กลับมา ถ้าต้องการบันทึกร่องรอยการใช้สิทธิ์ ต้องบันทึกที่ฝั่ง card_play
+	// ไม่ใช่ยัดผ่านเส้นทางหักยอดของ card_deposit
 	_, err := GetCardPlayTypeByCardPlayId(*cardPlayId)
 	if err == nil {
-		cpt, err := UpdateCardPlayTypeUsed(cardPlayId, cardNo)
-		if err == nil {
-			Withdraws = append(Withdraws, Deposit{
-				Id:           &cpt.CardPlayId,
-				BalanceCoin:  0,
-				BalanceBonus: 0,
-			})
+		// เดิมกลืน error ของขั้นนี้เงียบ ๆ (if err == nil โดยไม่มี else)
+		// ไม่เปลี่ยนให้ล้มทั้งรายการ เพราะตัวนับไม่ใช่ตัวเงิน แต่ต้องเห็นว่ามันไม่ขยับ
+		if _, err := UpdateCardPlayTypeUsed(cardPlayId, cardNo); err != nil {
+			fmt.Printf("card play %s: อัปเดต used_time ของ card_play_type ไม่สำเร็จ: %v\n",
+				cardPlayId, err)
 		}
 	}
 

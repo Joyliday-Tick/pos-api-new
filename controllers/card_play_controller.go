@@ -193,10 +193,21 @@ func DeductCardPlay(c *gin.Context) {
 		CardNo    string     `json:"card_no"`
 		DepositID *uuid.UUID `json:"deposit_id"`
 	}
-	DepositIDs := withdraws[0].Id // Example UUID, replace with actual logic
+	// withdraws ว่างได้จริง เช่นบัตร Package ที่เล่นด้วยสิทธิ์ ไม่ได้หัก coin/bonus
+	// (DeductCardPlay จะ append ก็ต่อเมื่อ input.ECoin > 0 หรือ input.EBonus > 0)
+	// เดิมกรณีนี้ไม่ระเบิดเพราะมีแถวที่ใส่ card_play.id ผิดตารางค้ำอยู่เป็นสมาชิกตัวแรกเสมอ
+	// พอเอาแถวนั้นออก (มันทำให้บัตร Package เล่นฟรี) ตัวค้ำก็หายไปด้วย
+	// ต้องเช็คความยาวก่อน ไม่งั้น withdraws[0] จะ panic index out of range
+	//
+	// ผลพลอยได้: ตอนนี้ deposit_id ที่ตอบกลับเป็น card_deposit.id จริง ๆ เสียที
+	// ของเดิมบนบัตร Package/Time-play จะเป็น card_play.id ซึ่งผิดความหมายของชื่อฟิลด์
+	var depositID *uuid.UUID
+	if len(withdraws) > 0 {
+		depositID = withdraws[0].Id
+	}
 	SuccessResp := Success{
 		CardNo:    req.CardNo,
-		DepositID: DepositIDs,
+		DepositID: depositID,
 	}
 
 	utils.Success(c, "Card play balance deducted successfully", SuccessResp)
