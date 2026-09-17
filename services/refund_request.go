@@ -76,6 +76,33 @@ func RefundRequestByTel(tel string) ([]models.RefundRequestData, error) {
 	return result, nil
 }
 
+// FindRefundRequestStatusByID คืนค่า refund_sts ของคำขอคืนเงิน
+//
+// refund_sts = 'Y' คือยังรอคืนเงิน (หน้าจอดึงเฉพาะสถานะนี้มาแสดง)
+// refund_sts = 'N' คือยืนยันไปแล้ว
+//
+// คืน "" เมื่อไม่พบคำขอ ผู้เรียกต้องเช็คก่อนทำรายการ ไม่งั้นยืนยันซ้ำได้
+// แล้วหักยอดในบัตรซ้ำ เพราะไม่มีที่ไหนกันไว้เลย
+func FindRefundRequestStatusByID(reqId string) (string, error) {
+	if config.DB_POS == nil {
+		return "", fmt.Errorf("database connection is nil")
+	}
+
+	var status string
+	result := config.DB_POS.
+		Raw("SELECT COALESCE(refund_sts, '') FROM refund_request WHERE id = ?", reqId).
+		Scan(&status)
+
+	if result.Error != nil {
+		return "", fmt.Errorf("failed to read refund request: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return "", nil
+	}
+
+	return status, nil
+}
+
 func UpdateRefundRequestById(reqId string) error {
 	if config.DB_POS == nil {
 		return fmt.Errorf("database connection is nil")

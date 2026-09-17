@@ -10,7 +10,6 @@ import (
 	"new-pos-api/models"
 	"new-pos-api/utils"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -33,30 +32,6 @@ func CreatePosVoid(void models.PosVoidDto) (models.PosVoid, error) {
 	}
 
 	return posVoid, nil
-}
-
-// DeletePosVoidByID ใช้ถอนการจอง pos_void คืนเมื่อขั้นตอนคืนยอดล้มเหลว
-//
-// CreatePosVoid ถูกเรียกเป็นขั้นแรกเพื่อ "จอง" บิลไว้ไม่ให้ใครยกเลิกซ้ำ
-// ถ้าขั้นคืนยอดหลังจากนั้นพัง ต้องถอนการจองคืน ไม่งั้นบิลจะค้างอยู่ในสภาพ
-// "มีแถว pos_void แต่ยอดยังไม่ถูกคืน" แล้วการยกเลิกรอบหน้าจะโดน 409 ปฏิเสธ
-// ทั้งที่งานยังไม่ได้ทำ
-//
-// ปลอดภัยเพราะเรียกได้เฉพาะกับแถวที่เพิ่งสร้างในคำขอเดียวกันและยังไม่มีอะไรอ้างถึง
-func DeletePosVoidByID(voidID uuid.UUID) error {
-	if config.DB_POS == nil {
-		return fmt.Errorf("database pos connection is nil")
-	}
-
-	result := config.DB_POS.Where("void_id = ?", voidID).Delete(&models.PosVoid{})
-	if result.Error != nil {
-		return fmt.Errorf("failed to delete pos void: %w", result.Error)
-	}
-	if result.RowsAffected == 0 {
-		return fmt.Errorf("pos void %s not found", voidID)
-	}
-
-	return nil
 }
 
 func FindExistVoidByBillNo(billNo string) (*models.PosVoid, error) {

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-	"strings"
-	"sync"
 
 	"new-pos-api/middlewares"
 	"new-pos-api/models"
@@ -38,9 +36,26 @@ func CreateRefundConfirm(c *gin.Context) {
 		return
 	}
 
-	refundConfirm, err := services.CreateRefundConfirm(req)
+	// ---------------------------------------------------------------------
+	// กันยืนยันคืนเงินซ้ำ — ต้องอยู่ก่อนทุกอย่าง
+	//
+	// เดิมไม่มีที่ไหนเช็คเลยว่าคำขอนี้ยืนยันไปแล้วหรือยัง UpdateRefundRequestById
+	// ตั้ง refund_sts = 'N' ตอนจบ แต่ไม่มีใครอ่านค่านั้นก่อนทำรายการ
+	// ยิงซ้ำจึงหักยอดในบัตรซ้ำได้ทันที รูปแบบเดียวกับ void ซ้ำ (C2)
+	// ---------------------------------------------------------------------
+	refundStatus, err := services.FindRefundRequestStatusByID(req.ReqID)
 	if err != nil {
-		utils.Error(c, http.StatusBadRequest, fmt.Sprintf("Failed to create refund confirm: %v", err))
+		utils.Error(c, http.StatusInternalServerError, fmt.Sprintf("Failed to read refund request: %v", err))
+		return
+	}
+	if refundStatus == "" {
+		utils.Error(c, http.StatusBadRequest, fmt.Sprintf("ไม่พบคำขอคืนเงิน id: %s", req.ReqID))
+		return
+	}
+	if refundStatus != "Y" {
+		utils.Error(c, http.StatusConflict, fmt.Sprintf(
+			"คำขอคืนเงิน %s ถูกยืนยันไปแล้ว — ไม่ต้องยืนยันซ้ำ "+
+				"ถ้ายอดในบัตรยังดูไม่ถูกต้อง ให้ตรวจสอบก่อน อย่ากดยืนยันอีก", req.ReqID))
 		return
 	}
 
@@ -50,75 +65,80 @@ func CreateRefundConfirm(c *gin.Context) {
 		return
 	}
 
-	// ใช้ WaitGroup เพื่อรอให้ทั้งสองส่วนเสร็จพร้อมกัน
-	var (
-		allErrors []string
-		updateErr error
-		mu        sync.Mutex
-		wg        sync.WaitGroup
-	)
-
-	wg.Add(2)
-
-	// -------------------------------------------------
-	// 🧩 Parallel 1: Update Refund Request Status
-	// -------------------------------------------------
-	go func() {
-		defer wg.Done()
-		if err := services.UpdateRefundRequestById(req.ReqID); err != nil {
-			mu.Lock()
-			updateErr = fmt.Errorf("failed to update refund request: %v", err)
-			mu.Unlock()
-		}
-	}()
-
-	// -------------------------------------------------
-	// 🧩 Parallel 2: Handle Card Withdraw & Update Balance
-	// -------------------------------------------------
-	go func() {
-		defer wg.Done()
-
-		deducts, updateCardDeposits := applyCardWithdrawRefund(req, cardDeposits)
-
-		// สร้าง withdraw
-		for _, wt := range deducts {
-			if _, err := services.CreateCardWithdraw(wt, userId); err != nil {
-				mu.Lock()
-				allErrors = append(allErrors, fmt.Sprintf("Failed to create withdraw for CardDepositID %v: %v", wt.CardDepositId, err))
-				mu.Unlock()
-			}
-		}
-
-		// update balance
-		for _, cd := range updateCardDeposits {
-			if _, err := services.UpdateCardDepositBalance(cd); err != nil {
-				mu.Lock()
-				allErrors = append(allErrors, fmt.Sprintf("Failed to update balance for CardDepositID %v: %v", cd.ID, err))
-				mu.Unlock()
-			}
-		}
-	}()
-
-	// -------------------------------------------------
-	// ✅ รอให้ทั้งสองส่วนเสร็จ
-	// -------------------------------------------------
-	wg.Wait()
-
-	// ตรวจ error
-	if updateErr != nil {
-		utils.Error(c, http.StatusInternalServerError, updateErr.Error())
+	// คำนวณรายการหักให้เสร็จก่อนแตะข้อมูล ยอดไม่พอจะได้ไม่ต้องเขียนอะไรเลย
+	deducts, updateCardDeposits, err := applyCardWithdrawRefund(req, cardDeposits)
+	if err != nil {
+		utils.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if len(allErrors) > 0 {
-		utils.Error(c, http.StatusBadRequest, strings.Join(allErrors, "; "))
+	// จองคำขอด้วยการปิดสถานะก่อนลงมือ กันยิงซ้ำ/ยิงพร้อมกัน
+	// ถ้าขั้นหักยอดพังหลังจากนี้ คำขอจะถูกล็อกไว้และการยืนยันรอบหน้าจะโดน 409
+	// ตั้งใจให้ fail closed แบบเดียวกับ void — ต้องให้คนมาตรวจ ไม่ใช่ปล่อยให้ retry
+	if err := services.UpdateRefundRequestById(req.ReqID); err != nil {
+		utils.Error(c, http.StatusInternalServerError, fmt.Sprintf("Failed to update refund request: %v", err))
 		return
+	}
+
+	refundConfirm, err := services.CreateRefundConfirm(req)
+	if err != nil {
+		fmt.Printf("[REFUND] req_id=%s card_no=%s: ปิดสถานะคำขอแล้วแต่สร้าง refund_confirm ไม่สำเร็จ: %v "+
+			"— ยังไม่ได้หักยอดในบัตร ต้องเปิดสถานะคำขอกลับด้วยมือถ้าจะให้ทำใหม่\n",
+			req.ReqID, req.CardNo, err)
+		utils.Error(c, http.StatusBadRequest, fmt.Sprintf("Failed to create refund confirm: %v", err))
+		return
+	}
+
+	// ---------------------------------------------------------------------
+	// หักยอดในบัตร — ทำทีละคู่และเรียงกัน
+	//
+	// เดิมส่วนนี้เป็น goroutine ขนานสองตัว: ตัวหนึ่งปิดสถานะคำขอ อีกตัวหักยอด
+	// ทั้งคู่วิ่งจนจบไม่ว่าอีกฝั่งจะพังหรือไม่ และข้างในตัวหักยอดก็ยังวนสร้าง
+	// withdraw ครบทุกแถวก่อน แล้วค่อยวนหักยอด โดยเก็บ error ใส่ slice แล้ววนต่อ
+	//
+	// สภาพที่เกิดได้เมื่อ guard ของ UpdateCardDepositBalance คืน error:
+	// แถว refund_confirm ถูกเขียน คำขอถูกปิด ร่องรอย withdraw ครบ
+	// แต่ coin ยังอยู่บนบัตร — เงินสดออกจากลิ้นชักแต่บัตรไม่ถูกหัก
+	//
+	// ตอนนี้: หักยอดก่อน (ตัวเงินจริง) แล้วค่อยลง withdraw เจอ error หยุดทันที
+	// รูปแบบเดียวกับที่แก้ไปแล้วใน pos_void และ claim_prize
+	// ---------------------------------------------------------------------
+	for i := range updateCardDeposits {
+		if _, err := services.UpdateCardDepositBalance(updateCardDeposits[i]); err != nil {
+			fmt.Printf("[REFUND] req_id=%s card_no=%s: หักยอดไม่สำเร็จที่รายการ %d จาก %d: %v "+
+				"— คำขอถูกปิดไปแล้ว การยืนยันรอบหน้าจะโดน 409 ต้องตรวจว่าหักไปถึงไหน\n",
+				req.ReqID, req.CardNo, i+1, len(updateCardDeposits), err)
+			utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+				"หักยอดในบัตรไม่สำเร็จ (รายการที่ %d จาก %d): %v "+
+					"(คำขอ %s: ยอดถูกหักไปบางส่วนแล้ว ห้ามยืนยันซ้ำ แจ้งผู้ดูแลระบบ)",
+				i+1, len(updateCardDeposits), err, req.ReqID))
+			return
+		}
+
+		if _, err := services.CreateCardWithdraw(deducts[i], userId); err != nil {
+			// ยอดถูกหักแล้วแต่ลงร่องรอยไม่ได้ ตัวเงินถูกต้องแต่ audit trail ขาด
+			fmt.Printf("[REFUND] req_id=%s card_no=%s deposit=%v: หักยอดสำเร็จแล้วแต่สร้าง "+
+				"card_withdraw ไม่สำเร็จ: %v — ยอดในบัตรถูกต้องแล้ว แต่ไม่มีร่องรอยการหัก\n",
+				req.ReqID, req.CardNo, updateCardDeposits[i].ID, err)
+			utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+				"บันทึกร่องรอยการหักยอดไม่สำเร็จ (รายการที่ %d จาก %d): %v "+
+					"(คำขอ %s: ห้ามยืนยันซ้ำ)", i+1, len(updateCardDeposits), err, req.ReqID))
+			return
+		}
 	}
 
 	utils.Success(c, "Refund confirm created successfully", refundConfirm)
 }
 
-func applyCardWithdrawRefund(req models.RefundComfirmDto, deposits []models.CardDeposit) ([]models.CardWithdrawDto, []models.CardDepositBalanceDto) {
+// applyCardWithdrawRefund คืน (รายการ withdraw, รายการหักยอด, error)
+//
+// deducts[i] กับ updateCardDeposits[i] เป็นคู่กันเสมอ เพราะถูก append
+// ในรอบลูปเดียวกัน ผู้เรียกต้องจับคู่ตาม index และรันเรียงกัน
+//
+// error จะไม่เป็น nil เมื่อยอดในบัตรรวมกันไม่พอกับที่ขอคืน
+// เดิมวนหักเท่าที่มีแล้วจบ ไม่บอกใครว่าหักไม่ครบ ผู้เรียกก็ไม่ได้เช็ค
+// ผลคือคืนเงินสดเต็มจำนวนออกจากลิ้นชัก แต่หักออกจากบัตรได้ไม่ครบ
+func applyCardWithdrawRefund(req models.RefundComfirmDto, deposits []models.CardDeposit) ([]models.CardWithdrawDto, []models.CardDepositBalanceDto, error) {
 	var deducts []models.CardWithdrawDto
 	var updateCardDeposits []models.CardDepositBalanceDto
 
@@ -191,7 +211,13 @@ func applyCardWithdrawRefund(req models.RefundComfirmDto, deposits []models.Card
 			})
 		}
 
+		// เหลือค้างแปลว่ายอดในบัตรไม่พอกับที่ขอคืน ต้องไม่ให้ทำรายการต่อ
+		if e_coin > 0 || e_bonus > 0 {
+			return nil, nil, fmt.Errorf(
+				"ยอดในบัตร %s ไม่พอสำหรับการคืนเงินครั้งนี้ (ขาด e_coin %d, e_bonus %d)",
+				req.CardNo, e_coin, e_bonus)
+		}
 	}
 
-	return deducts, updateCardDeposits
+	return deducts, updateCardDeposits, nil
 }
