@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"new-pos-api/config"
 	docs "new-pos-api/docs" // Import docs (ต้อง generate ก่อนใช้งาน)
+	"new-pos-api/utils"
 	"os"
 	"time"
 
@@ -68,6 +70,13 @@ func main() {
 	config.ConnectDatabasePos()
 	config.ConnectDatabaseJRFeader()
 	config.ConnectDatabaseEStamp()
+
+	// ต้องอยู่ "หลัง" ConnectDatabase เพราะตัวนั้นเป็นที่เรียก godotenv.Load()
+	// ล้มตั้งแต่ตอนบูตถ้ากุญแจไม่พร้อม ดีกว่าขึ้นมาให้บริการด้วยกุญแจว่าง
+	// ซึ่งจะทำงานปกติทุกอย่างแต่ใครก็ปลอม token admin ได้
+	if err := utils.InitJwtSecret(); err != nil {
+		log.Fatalf("เริ่มระบบไม่ได้: %v", err)
+	}
 	app, _ := newrelic.NewApplication(
 		newrelic.ConfigAppName("pos-production"),
 		newrelic.ConfigLicense(os.Getenv("NEWRELIC_LICENSE")),
