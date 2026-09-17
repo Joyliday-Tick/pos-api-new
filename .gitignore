@@ -1,4 +1,16 @@
+# env และความลับ — ห้าม commit เด็ดขาด
+#
+# ต้องมี .env.* ด้วย ไม่ใช่แค่ .env
+# เพราะ .env ตรงกับชื่อนั้นเป๊ะ ๆ เท่านั้น ไม่ครอบไฟล์สำรองอย่าง
+# .env.bak-20260917-0958 ที่เกิดจากการหมุน secret ซึ่งมี DSN ของ 4 ฐานข้อมูล
+# และ credential ภายนอกครบทั้งชุด
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.zip
+
 .gitlab-ci.yml
 
 # build artifact (tmp/main.exe ~62 MB)
