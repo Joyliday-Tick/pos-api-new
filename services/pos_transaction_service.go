@@ -466,6 +466,11 @@ func GenerateBillNo(PosID string) string {
 	totalRecord++
 
 	prefix := os.Getenv("BILL_PREFIX_NORMAL")
+	if prefix == "" {
+		// เดิมไม่มี default ถ้า env หายไปเลขบิลจะขึ้นต้นด้วยขีด เช่น "-213-2609160001"
+		// ซึ่งดูไม่ออกว่าผิดจนกว่าจะมีคนสังเกต — ให้เหมือน deposit/redeem ที่มี default อยู่แล้ว
+		prefix = "JYN"
+	}
 
 	// totalRecord นับเฉพาะบิลของ "วันนี้" (startOfDay..startOfNextDay)
 	// เลขบิลจึงต้องมี day ด้วย ไม่งั้นพอขึ้นวันใหม่ตัวนับรีเซ็ตเป็น 1
