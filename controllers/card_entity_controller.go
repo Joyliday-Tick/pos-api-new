@@ -267,6 +267,41 @@ func TopupCardPOS(c *gin.Context) {
 		return
 	}
 
+	// ---------------------------------------------------------------------
+	// แกะ pointer และ parse UUID ให้เสร็จตรงนี้ ก่อนแตะฐานข้อมูลแม้แต่แถวเดียว
+	//
+	// เดิมสามค่านี้ถูก dereference หลัง wg.Wait() คือหลังจาก card_deposit
+	// ถูก commit ไปแล้ว (เงินเข้าบัตรเรียบร้อย) แต่ก่อนสร้าง pos_transaction
+	// พอ panic กลางทางจึงได้สภาพ: เงินอยู่ในบัตร แต่ไม่มีบิล ไม่มีเลขบิล
+	// ไม่มีบันทึกการชำระเงิน ยอดนั้น void ไม่ได้ (CreatePosVoid ตอบ billNo not found)
+	// และไม่โผล่ในรายงานใดเลย แคชเชียร์เห็น error ก็เติมซ้ำ กลายเป็นเติมสองรอบ
+	//
+	//   free_point  : *int    ไม่มี validate tag = optional จริง ๆ
+	//                 (บรรทัดล่างเช็ค req.FreePoint != nil หลัง deref ไปแล้ว)
+	//   bank_detail : *string ไม่มี validate tag เช่นกัน
+	//   bill_payment_id : validate:"required" เช็คแค่ว่าไม่ว่าง ไม่ได้เช็คว่า
+	//                 เป็น UUID ที่ parse ได้ ส่ง "abc" มาก็ผ่าน validator
+	//                 แล้วไป panic ที่ uuid.MustParse
+	//
+	// ย้ายมาไว้ตรงนี้แล้ว input ที่ไม่ครบจะได้ 400 ตั้งแต่ยังไม่มีอะไรเกิดขึ้น
+	// ---------------------------------------------------------------------
+	billPaymentId, err := uuid.Parse(strings.TrimSpace(req.BillPaymenytId))
+	if err != nil {
+		utils.Error(c, http.StatusBadRequest,
+			fmt.Sprintf("bill_payment_id ไม่ใช่ UUID ที่ถูกต้อง: %q", req.BillPaymenytId))
+		return
+	}
+
+	freePoint := 0
+	if req.FreePoint != nil {
+		freePoint = *req.FreePoint
+	}
+
+	bankDetail := ""
+	if req.BankDetail != nil {
+		bankDetail = *req.BankDetail
+	}
+
 	// Check if card is locked
 	lockCard, err := services.FindLockCard(req.CardNo)
 	if err != nil {
@@ -303,8 +338,16 @@ func TopupCardPOS(c *gin.Context) {
 
 		// TODO : UPDATE CARD TYPE
 		if req.CardTypeId != "" && req.CardTypeId != registeredCard.CardTypeId.String() {
-			cardTypeId := uuid.MustParse(req.CardTypeId)
-			_, err := services.UpdateCardTypeToCardEntity(registeredCard.ID, cardTypeId)
+			// MustParse panic ถ้า card_type_id ไม่ใช่ UUID — validate:"required"
+			// เช็คแค่ว่าไม่ว่าง ส่ง "abc" มาก็ผ่าน แล้วมาระเบิดตรงนี้
+			// ซึ่งเป็นจุดที่เบอร์สมาชิกถูกอัปเดตไปแล้วด้านบน
+			cardTypeId, err := uuid.Parse(strings.TrimSpace(req.CardTypeId))
+			if err != nil {
+				utils.Error(c, http.StatusBadRequest,
+					fmt.Sprintf("card_type_id ไม่ใช่ UUID ที่ถูกต้อง: %q", req.CardTypeId))
+				return
+			}
+			_, err = services.UpdateCardTypeToCardEntity(registeredCard.ID, cardTypeId)
 			if err != nil {
 				utils.Error(c, http.StatusInternalServerError, fmt.Sprintf("Failed to update card type: %v", err))
 				return
@@ -470,6 +513,17 @@ func TopupCardPOS(c *gin.Context) {
 			go func() {
 				defer wg.Done()
 				defer func() { <-sem }()
+				// panic ใน goroutine ที่ไม่มีใครรับ = ทั้ง process ตาย
+				// gin Recovery ครอบเฉพาะ goroutine ของ handler เอง ครอบไม่ถึงตรงนี้
+				// ถ้าเกิดขึ้นจริงจะลากทุก request ที่ค้างอยู่ตายไปด้วย และ card_deposit
+				// ที่ commit ไปแล้วก็กลายเป็นยอดลอยไม่มีบิล
+				// แปลงเป็น error ปกติแทน ให้ wg.Wait() ด้านล่างจัดการต่อ
+				defer func() {
+					if r := recover(); r != nil {
+						setError(fmt.Errorf("panic ระหว่างสร้างรายการเติมเงิน (bill %s, pos_menu %d): %v",
+							transactionNo, item.PosMenuId, r))
+					}
+				}()
 				menuDetail, ok := posMenuCache[item.PosMenuId]
 				if !ok {
 					setError(fmt.Errorf("pos menu not cached: %d", item.PosMenuId))
@@ -597,14 +651,32 @@ func TopupCardPOS(c *gin.Context) {
 			}()
 		}
 		wg.Wait()
+
+		// ตรงนี้ card_deposit ถูก commit ไปแล้ว (เงินเข้าบัตรแล้ว) แต่ยังไม่มี
+		// pos_transaction ถ้าออกจากฟังก์ชันระหว่างนี้จะเหลือ "ยอดลอย" ที่ void ไม่ได้
+		// และไม่โผล่ในรายงานใด ยังแก้ให้ atomic จริงไม่ได้ในคอมมิตนี้ (ต้องครอบ
+		// transaction เดียวกันทั้งก้อน ซึ่ง goroutine ขนานทำแบบนั้นไม่ได้)
+		// อย่างน้อยต้อง log ให้ตามเก็บได้ ด้วยเลขบิลซึ่งติดอยู่กับทุกแถวที่สร้าง:
+		//   SELECT * FROM card_deposit WHERE bill_no = '<เลขบิล>'
+		//   AND NOT EXISTS (SELECT 1 FROM pos_transaction t WHERE t.bill_no = card_deposit.bill_no)
+		orphanWarning := func(reason string) {
+			fmt.Printf("[ORPHAN DEPOSIT] bill_no=%s card_no=%s cashier=%s location=%s "+
+				"amount=%.2f coin=%d bonus=%d: %s — ยอดเข้าบัตรแล้วแต่ไม่มี pos_transaction "+
+				"ต้องตามเก็บด้วยมือ ห้ามให้แคชเชียร์เติมซ้ำก่อนตรวจ\n",
+				transactionNo, req.CardNo, req.Cashier, req.BillLocation,
+				AmountPrice, AmountCoin, AmountBonus, reason)
+		}
+
 		if firstErr != nil {
-			utils.Error(c, http.StatusInternalServerError, firstErr.Error())
+			orphanWarning(firstErr.Error())
+			utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+				"%v (เลขบิล %s: ยอดอาจเข้าบัตรไปแล้วบางส่วน ตรวจยอดในบัตรก่อนทำรายการซ้ำ)",
+				firstErr, transactionNo))
 			return
 		}
 
 		// TODO : add POSTransaction
 		billDate := *utils.TimeNowAsia()
-		billPaymentId := uuid.MustParse(req.BillPaymenytId)
 		transaction := models.PosTransactionDto{
 			BillNo:          transactionNo,
 			PosID:           req.PosId,
@@ -615,24 +687,27 @@ func TopupCardPOS(c *gin.Context) {
 			MemberTel:       req.MemberTel,
 			ProductPrice:    int(AmountPrice),
 			ECoin:           AmountCoin,
-			FreePoint:       *req.FreePoint,
+			FreePoint:       freePoint,
 			EBonus:          AmountBonus,
 			BillPaymentId:   billPaymentId,
 			PosType:         req.PosType,
 			BillStatus:      billStatus,
 			BonusStatus:     BonusStatus,
-			BankDetail:      *req.BankDetail,
+			BankDetail:      bankDetail,
 			SubTransactions: PosTransactionSub,
 		}
 
 		_, err = services.CreatePosTransaction(transaction, userId)
 		if err != nil {
-			utils.Error(c, http.StatusInternalServerError, fmt.Sprintf("Failed to create pos transaction: %v", err))
+			orphanWarning(fmt.Sprintf("สร้าง pos_transaction ไม่สำเร็จ: %v", err))
+			utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+				"Failed to create pos transaction: %v (เลขบิล %s: ยอดเข้าบัตรไปแล้ว "+
+					"ตรวจยอดในบัตรก่อนทำรายการซ้ำ ห้ามเติมซ้ำทันที)", err, transactionNo))
 			return
 		}
 
 		// TODO : add Free point
-		if req.FreePoint != nil && *req.FreePoint > 0 && req.MemberTel != "0000000000" {
+		if freePoint > 0 && req.MemberTel != "0000000000" {
 
 			// update CRM history
 			status, customer, err := services.GetCustomerByMobileNo(strings.TrimSpace(req.MemberTel))
@@ -667,7 +742,7 @@ func TopupCardPOS(c *gin.Context) {
 				CustomerID:       customer.ID,
 				ScoreTypeID:      pointID,
 				BranchID:         branch.ID,
-				Amount:           int(*req.FreePoint),
+				Amount:           freePoint,
 				TransactionDate:  billDate,
 				CreateBy:         req.Cashier,
 				MobileNo:         req.MemberTel,
@@ -679,7 +754,7 @@ func TopupCardPOS(c *gin.Context) {
 
 			services.SyncHistory(historys)
 			// update POS member point
-			member, err := services.UpdatePoint(*req.FreePoint, req.MemberTel)
+			member, err := services.UpdatePoint(freePoint, req.MemberTel)
 			if err != nil {
 				utils.Error(c, http.StatusInternalServerError, fmt.Sprintf("Failed to update point: %v", err))
 				return
