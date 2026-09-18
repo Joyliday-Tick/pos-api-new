@@ -459,11 +459,60 @@ func UpdateMemberTelToCardEntity(cardEntityId uuid.UUID, entityMobile string, ca
 	if config.DB_POS == nil {
 		return nil, fmt.Errorf("database connection is nil")
 	}
-	if strings.TrimSpace(memberTel) != strings.TrimSpace(entityMobile) {
-		config.DB_POS.Exec("UPDATE card_entity SET member_tel = ?, update_date = ? WHERE id = ?", memberTel, now, cardEntityId)
-		return &cardEntityId, nil
+	newTel := strings.TrimSpace(memberTel)
+	oldTel := strings.TrimSpace(entityMobile)
+
+	if newTel == oldTel {
+		return nil, nil
 	}
-	return nil, nil
+
+	// ---------------------------------------------------------------------
+	// เปลี่ยนเจ้าของบัตรได้เฉพาะเมื่อเบอร์ปลายทางเป็นสมาชิกที่มีตัวตนจริง
+	//
+	// ฟังก์ชันนี้ถูกเรียกจากเส้นทาง "เติมเงิน" และเขียนทับเบอร์ผู้ถือบัตรทันที
+	// แคชเชียร์พิมพ์เบอร์ผิดหนึ่งตัว = บัตรเปลี่ยนเจ้าของเงียบ ๆ และยอดเดิม
+	// หายไปจากสายตา เพราะ CheckCardInfo รวมเฉพาะ deposit ที่ member_tel
+	// ตรงกับ card_entity.member_tel
+	//
+	// เกิดขึ้นจริง: 2026-09-17 การทดสอบที่ใส่เบอร์สมมติ 0812345678 ทำให้บัตร
+	// E447913B ของลูกค้าจริงเปลี่ยนเบอร์ผู้ถือ และยอด 280 coin มองไม่เห็น
+	// (กู้คืนแล้ว) เบอร์นั้นไม่มีในตาราง member — การตรวจนี้จะกันได้
+	//
+	// ตรวจประวัติ log_update_card_entity เมื่อ 2026-09-18:
+	//   ไม่ระบุตัวตน -> สมาชิก      545 ครั้ง  ปกติ ต้องทำงานได้ต่อ
+	//   สมาชิก -> ไม่ระบุตัวตน      511 ครั้ง  ปกติ (ขายแบบไม่ระบุสมาชิก)
+	//   สมาชิก ก -> สมาชิก ข         86 ครั้ง  ในนี้ 11 ครั้งเบอร์ปลายทาง
+	//                                          ไม่มีตัวตนเลย = น่าจะพิมพ์ผิด
+	//
+	// จึงไม่บล็อกการขาย แค่ "ไม่เปลี่ยนเจ้าของ" แล้ว log ไว้
+	// เพราะสมาชิกที่เพิ่งสมัครใน CRM อาจยังไม่ถูก sync เข้าตาราง member
+	// การทำให้ขายไม่ได้จะแย่กว่าการไม่เปลี่ยนเบอร์
+	//
+	// ส่วนการปลดผูกกลับเป็นไม่ระบุตัวตนยังทำได้ตามเดิม
+	// ถ้าต้องการย้ายบัตรระหว่างสมาชิกจริง ๆ มี /api/card/transfer อยู่แล้ว
+	// ซึ่งบันทึกลง log_transfer_card ต่างหาก
+	// ---------------------------------------------------------------------
+	if newTel != "" && newTel != "0000000000" {
+		member, err := FindExistMemberTel(newTel)
+		if err != nil {
+			return nil, fmt.Errorf("ตรวจสอบสมาชิกปลายทางไม่สำเร็จ: %w", err)
+		}
+		if member == nil {
+			fmt.Printf("[CARD] card_no=%s: ไม่เปลี่ยนเจ้าของบัตรจาก %s เป็น %s "+
+				"เพราะไม่พบสมาชิกเบอร์นี้ — ถ้าตั้งใจย้ายบัตรให้ใช้ /api/card/transfer\n",
+				cardNo, oldTel, newTel)
+			return nil, nil
+		}
+	}
+
+	// เดิมทิ้งผลของ Exec ทั้งก้อน อัปเดตไม่สำเร็จก็ไม่มีใครรู้
+	if err := config.DB_POS.Exec(
+		"UPDATE card_entity SET member_tel = ?, update_date = ? WHERE id = ?",
+		newTel, now, cardEntityId).Error; err != nil {
+		return nil, fmt.Errorf("อัปเดตเบอร์ผู้ถือบัตรไม่สำเร็จ: %w", err)
+	}
+
+	return &cardEntityId, nil
 }
 
 func PermanentlyDeleteCard(cardNo string) error {

@@ -324,7 +324,15 @@ func TopupCardPOS(c *gin.Context) {
 
 	} else {
 		// TODO : update member tel
-		cardEntityId, _ := services.UpdateMemberTelToCardEntity(registeredCard.ID, registeredCard.MemberTel, req.CardNo, req.MemberTel)
+		//
+		// เดิมทิ้ง error ทั้งก้อน (cardEntityId, _ :=) การอัปเดตล้มเหลวจึงเงียบสนิท
+		// ไม่ทำให้การขายล้ม เพราะการเปลี่ยนเบอร์ผู้ถือบัตรเป็นงานพ่วง ไม่ใช่ตัวเงิน
+		// แต่ต้องเห็นว่าเกิดอะไรขึ้น
+		cardEntityId, telErr := services.UpdateMemberTelToCardEntity(registeredCard.ID, registeredCard.MemberTel, req.CardNo, req.MemberTel)
+		if telErr != nil {
+			fmt.Printf("[TOPUP] card_no=%s: อัปเดตเบอร์ผู้ถือบัตรไม่สำเร็จ: %v "+
+				"— การขายดำเนินต่อ เบอร์ผู้ถือบัตรยังเป็นค่าเดิม\n", req.CardNo, telErr)
+		}
 		// insert Log update mobile
 		if cardEntityId != nil {
 			services.CreateLogUpdateCardEntity(models.LogUpdateCardEntityDto{
