@@ -219,10 +219,18 @@ func CreatePosVoid(c *gin.Context) {
 
 		if shortCoin > 0 || shortBonus > 0 {
 			if !req.ForceVoid {
-				utils.Error(c, http.StatusConflict, fmt.Sprintf(
+				// แนบ reason + จำนวนที่ขาดไปด้วย เพื่อให้หน้าจอแยกออกจาก 409
+				// อีกความหมาย (บิลถูกยกเลิกไปแล้ว) ซึ่งต้องไม่เสนอให้ทำต่อ
+				utils.ErrorWithData(c, http.StatusConflict, fmt.Sprintf(
 					"ยอดในบัตร %s ไม่พอให้กลับรายการบิล %s (ขาด e_coin %d, e_bonus %d) "+
 						"ลูกค้าใช้ยอดนี้ไปแล้ว ต้องให้ผู้จัดการอนุมัติทับจึงจะยกเลิกได้",
-					req.CardNo, req.BillNo, shortCoin, shortBonus))
+					req.CardNo, req.BillNo, shortCoin, shortBonus),
+					gin.H{
+						"reason":      "insufficient_balance",
+						"can_force":   true,
+						"short_coin":  shortCoin,
+						"short_bonus": shortBonus,
+					})
 				return
 			}
 

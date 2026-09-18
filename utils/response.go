@@ -23,6 +23,21 @@ func Error(c *gin.Context, code int, message string) {
 	})
 }
 
+// ErrorWithData เหมือน Error แต่แนบข้อมูลให้ฝั่งหน้าจออ่านได้
+//
+// ใช้เมื่อหน้าจอต้องแยกแยะสาเหตุ ไม่ใช่แค่แสดงข้อความ เช่น 409 ของ /pos-void
+// มีสองความหมาย (บิลถูกยกเลิกไปแล้ว / ยอดไม่พอต้องขออนุมัติ) ซึ่งต้องทำต่อ
+// คนละอย่าง การให้หน้าจอเดาจากข้อความไทยเปราะเกินไป
+//
+// ซองยังเหมือนเดิมทุกฟิลด์ ผู้เรียกที่อ่านแค่ message จึงไม่กระทบ
+func ErrorWithData(c *gin.Context, code int, message string, data interface{}) {
+	c.JSON(code, gin.H{
+		"success": false,
+		"message": message,
+		"data":    data,
+	})
+}
+
 type StandardSuccessResponse struct {
 	Success bool        `json:"success" example:"true"`
 	Message string      `json:"message" example:"Success"`
