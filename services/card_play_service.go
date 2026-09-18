@@ -242,13 +242,34 @@ func DeductCardPlay(input models.CardPlayDeductDto, userId int) ([]Deposit, erro
 	//
 	// ห้ามใส่กลับมา ถ้าต้องการบันทึกร่องรอยการใช้สิทธิ์ ต้องบันทึกที่ฝั่ง card_play
 	// ไม่ใช่ยัดผ่านเส้นทางหักยอดของ card_deposit
-	_, err := GetCardPlayTypeByCardPlayId(*cardPlayId)
+	cpt, err := GetCardPlayTypeByCardPlayId(*cardPlayId)
 	if err == nil {
-		// เดิมกลืน error ของขั้นนี้เงียบ ๆ (if err == nil โดยไม่มี else)
-		// ไม่เปลี่ยนให้ล้มทั้งรายการ เพราะตัวนับไม่ใช่ตัวเงิน แต่ต้องเห็นว่ามันไม่ขยับ
-		if _, err := UpdateCardPlayTypeUsed(cardPlayId, cardNo); err != nil {
-			fmt.Printf("card play %s: อัปเดต used_time ของ card_play_type ไม่สำเร็จ: %v\n",
-				cardPlayId, err)
+		// นับเฉพาะ entitlement ที่มีโควตาจำนวนครั้งจริง
+		//
+		// UpdateCardPlayTypeUsed ใช้เงื่อนไข used_time < play_time
+		// แถวที่ play_time = 0 จึงเพิ่มตัวนับไม่ได้เลยตามนิยาม ซึ่งถูกต้อง —
+		// 0 หมายถึงไม่จำกัดจำนวนครั้ง (เพดานคือยอดในบัตร ไม่ใช่จำนวนรอบ)
+		// ตรวจ UAT 2026-09-18: play_time = 0 มี 414 แถวจาก card_play_type
+		// ที่ใช้งานอยู่ ส่วนแถวที่มีโควตาจริง (5, 10, 12, 20, 25, 100) ทำงานปกติ
+		//
+		// ถ้าไม่กรองตรงนี้ log จะขึ้นทุกครั้งที่มีคนแตะบัตรบน 414 แถวนั้น
+		// ซึ่งเป็นเส้นทางที่ถูกเรียกบ่อยที่สุดในระบบ และจะกลบ error จริงจนหาไม่เจอ
+		playTime := 0
+		if cpt.PlayTime != nil {
+			playTime = *cpt.PlayTime
+		}
+
+		if playTime > 0 {
+			// เดิมกลืน error ของขั้นนี้เงียบ ๆ (if err == nil โดยไม่มี else)
+			// ไม่เปลี่ยนให้ล้มทั้งรายการ เพราะตัวนับไม่ใช่ตัวเงิน แต่ต้องเห็นว่ามันไม่ขยับ
+			//
+			// หมายเหตุ: ถ้า used_time >= play_time (โควตาหมด) จะมาโผล่ที่นี่และ
+			// รายการยังเดินต่อ แปลว่าเล่นเกินโควตาได้ถ้ายอดในบัตรยังเหลือ
+			// ยังไม่แก้เพราะต้องรู้กฎทางธุรกิจก่อนว่าควรบล็อกหรือไม่
+			if _, err := UpdateCardPlayTypeUsed(cardPlayId, cardNo); err != nil {
+				fmt.Printf("card play %s: อัปเดต used_time ของ card_play_type ไม่สำเร็จ "+
+					"(play_time=%d): %v\n", cardPlayId, playTime, err)
+			}
 		}
 	}
 
