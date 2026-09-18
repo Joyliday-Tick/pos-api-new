@@ -33,7 +33,8 @@ import (
 func GetRefundRequestByTel(c *gin.Context) {
 	tel := c.Param("tel")
 
-	fmt.Println("Telephone:", tel)
+	// เดิม fmt.Println("Telephone:", tel) — พิมพ์เบอร์ลูกค้าเต็มหมายเลขลง log
+	// ทุกครั้งที่มีการเรียก โดยไม่ได้ใช้ทำอะไร ลบทิ้ง
 
 	findRefundRequest, err := services.RefundRequestByTel(tel)
 	if err != nil {

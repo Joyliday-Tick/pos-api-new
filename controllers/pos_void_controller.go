@@ -385,8 +385,9 @@ func CreatePosVoid(c *gin.Context) {
 		// แล้วทั้งคำขอตอบ 500 ทั้งที่ยอดในบัตรถูกคืนเรียบร้อยแล้ว
 		// ตอนนี้บิลถูกจองไว้แล้ว การกดซ้ำจะโดน 409 ปฏิเสธ ไม่หักซ้ำอีก
 		fmt.Printf("[VOID] bill_no=%s: ยกเลิกบิลในระบบ POS สำเร็จครบแล้ว "+
-			"แต่ซิงก์คะแนนกับ CRM ไม่สำเร็จ: %v — ต้องปรับคะแนนสมาชิก %s ด้วยมือ\n",
-			req.BillNo, err, existTransaction.MemberTel)
+			"แต่ซิงก์คะแนนกับ CRM ไม่สำเร็จ: %v — ต้องปรับคะแนนสมาชิก %s ด้วยมือ "+
+			"(เบอร์เต็มดูได้จาก pos_transaction.member_tel ของบิลนี้)\n",
+			req.BillNo, err, utils.MaskTel(existTransaction.MemberTel))
 		utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
 			"%v (บิล %s: ยกเลิกในระบบ POS เรียบร้อยแล้ว ยอดในบัตรถูกคืนถูกต้อง "+
 				"เหลือแค่คะแนนสมาชิกที่ยังไม่ซิงก์ ห้ามกดยกเลิกซ้ำ)", err, req.BillNo))

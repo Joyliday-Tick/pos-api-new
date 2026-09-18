@@ -93,7 +93,7 @@ func CreateClaimPrize(c *gin.Context) {
 			// (ยอดไม่พอถูกกรองไปตั้งแต่ด่านบนแล้ว เหลือแต่ความล้มเหลวระหว่างทาง)
 			fmt.Printf("[CLAIM] cp_id=%s card_no=%v member_tel=%s: หักยอดไม่สำเร็จ: %v "+
 				"— แถว claim_prize ถูกเขียนไปแล้วและอาจหักไปบางส่วน ต้องตรวจก่อนให้ลูกค้าแลกใหม่\n",
-				claim.CPID, req.CardNo, req.MemberTel, err)
+				claim.CPID, req.CardNo, utils.MaskTel(req.MemberTel), err)
 			utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
 				"%v (เลขอ้างอิง %s: ตรวจยอดในบัตรก่อนให้แลกใหม่ ห้ามกดซ้ำทันที)",
 				err, claim.CPID))
@@ -132,7 +132,7 @@ func CreateClaimPrize(c *gin.Context) {
 	if len(allErrors) > 0 {
 		// ยอดถูกหักเรียบร้อยแล้ว ตัวนับพลิกไม่สำเร็จเป็นงานพ่วง
 		fmt.Printf("[CLAIM] cp_id=%s member_tel=%s: หักยอดสำเร็จแล้วแต่พลิกตัวนับไม่สำเร็จ: %s\n",
-			claim.CPID, req.MemberTel, strings.Join(allErrors, " | "))
+			claim.CPID, utils.MaskTel(req.MemberTel), strings.Join(allErrors, " | "))
 		utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
 			"%s (เลขอ้างอิง %s: ยอดในบัตรถูกหักเรียบร้อยแล้ว ห้ามกดแลกซ้ำ)",
 			strings.Join(allErrors, " | "), claim.CPID))

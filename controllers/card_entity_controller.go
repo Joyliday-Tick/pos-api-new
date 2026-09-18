@@ -782,7 +782,7 @@ func TopupCardPOS(c *gin.Context) {
 				if status, _, err := services.SyncHistory(historys); err != nil || status != http.StatusOK {
 					fmt.Printf("[TOPUP] bill_no=%s member_tel=%s: บันทึกประวัติ CRM ไม่สำเร็จ "+
 						"(status=%d): %v — ยอดและบิลถูกบันทึกแล้ว ขาดแค่ประวัติฝั่ง CRM\n",
-						transactionNo, req.MemberTel, status, err)
+						transactionNo, utils.MaskTel(req.MemberTel), status, err)
 				}
 			}()
 

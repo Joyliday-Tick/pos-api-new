@@ -23,7 +23,8 @@ import (
 func GetDepositCronByTel(c *gin.Context) {
 	tel := c.Param("tel")
 
-	fmt.Println("Telephone:", tel)
+	// เดิม fmt.Println("Telephone:", tel) — พิมพ์เบอร์ลูกค้าเต็มหมายเลขลง log
+	// ทุกครั้งที่มีการเรียก โดยไม่ได้ใช้ทำอะไร ลบทิ้ง
 
 	findDeposit, err := services.GetDepositHeadByTel(tel)
 	if err != nil {

@@ -500,7 +500,7 @@ func UpdateMemberTelToCardEntity(cardEntityId uuid.UUID, entityMobile string, ca
 		if member == nil {
 			fmt.Printf("[CARD] card_no=%s: ไม่เปลี่ยนเจ้าของบัตรจาก %s เป็น %s "+
 				"เพราะไม่พบสมาชิกเบอร์นี้ — ถ้าตั้งใจย้ายบัตรให้ใช้ /api/card/transfer\n",
-				cardNo, oldTel, newTel)
+				cardNo, utils.MaskTel(oldTel), utils.MaskTel(newTel))
 			return nil, nil
 		}
 	}
