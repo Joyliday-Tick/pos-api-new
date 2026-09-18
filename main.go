@@ -77,6 +77,11 @@ func main() {
 	if err := utils.InitJwtSecret(); err != nil {
 		log.Fatalf("เริ่มระบบไม่ได้: %v", err)
 	}
+	// ด้วยเหตุผลเดียวกัน — ของเดิมตรวจ TOKEN_EXPIRE ข้างใน GetJWT แล้ว log.Fatalf
+	// ทำให้ API ขึ้นมาให้บริการได้ตามปกติ แล้วตายทั้งโปรเซสตอนมีคน login คนแรก
+	if err := utils.InitTokenExpire(); err != nil {
+		log.Fatalf("เริ่มระบบไม่ได้: %v", err)
+	}
 	app, _ := newrelic.NewApplication(
 		newrelic.ConfigAppName("pos-production"),
 		newrelic.ConfigLicense(os.Getenv("NEWRELIC_LICENSE")),

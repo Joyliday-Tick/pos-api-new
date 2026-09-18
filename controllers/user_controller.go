@@ -77,6 +77,18 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
+	// ทั้งสองคอลัมน์เป็น nullable และ DTO ไม่ได้บังคับ ถ้าเรียกมาโดยไม่ส่งสองค่านี้
+	// จะได้บัญชีที่ "สร้างสำเร็จ" แต่ล็อกอินไม่ได้ เพราะ AuthenticateWithBranch
+	// ต้องใช้ทั้ง role และ group เพื่อประกอบ token — ปิดทางไว้ตั้งแต่ตอนสร้าง
+	if req.UserRoleId == nil {
+		utils.Error(c, http.StatusBadRequest, "ต้องระบุ user_role_id ไม่งั้นบัญชีนี้จะล็อกอินไม่ได้")
+		return
+	}
+	if req.UserGroupId == nil {
+		utils.Error(c, http.StatusBadRequest, "ต้องระบุ user_group_id ไม่งั้นบัญชีนี้จะล็อกอินไม่ได้")
+		return
+	}
+
 	existUser, err := services.FindUserDbByUsername(strings.TrimSpace(req.Username))
 	if err == nil && existUser != nil && existUser.ID != 0 {
 		utils.Error(c, http.StatusBadRequest, "User with this username already exists")
@@ -88,7 +100,6 @@ func CreateUser(c *gin.Context) {
 		utils.Error(c, http.StatusUnauthorized, fmt.Sprintf("Error extracting userId: %v", err))
 		return
 	}
-	fmt.Println("userId", userId)
 
 	user, err := services.CreateUser(req, userId)
 	if err != nil {
@@ -115,16 +126,27 @@ func UpdateUser(c *gin.Context) {
 	id := c.Param("id")
 	dInt, err := strconv.Atoi(id)
 	if err != nil {
-		// Handle error เช่น หาก id ไม่ใช่ตัวเลข
-		fmt.Println("Invalid id")
+		// เดิม return เฉย ๆ โดยไม่เขียน response — gin จึงตอบ 200 ตัวเปล่า
+		// ผู้เรียกเห็นเป็น "แก้ไขสำเร็จ" ทั้งที่ไม่ได้แตะฐานข้อมูลเลย
+		utils.Error(c, http.StatusBadRequest, fmt.Sprintf("id ไม่ถูกต้อง: %s", id))
 		return
 	}
 
 	var req models.UsersUpdateDto
-	fmt.Printf("%+v\n", req)
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// updateData เขียนทับด้วย map เสมอ ถ้าสองค่านี้เป็น nil จะกลายเป็น
+	// UPDATE ... SET user_role_id = NULL ทำให้บัญชีที่เคยใช้ได้ล็อกอินไม่ได้อีก
+	if req.UserRoleId == nil {
+		utils.Error(c, http.StatusBadRequest, "ต้องระบุ user_role_id ไม่งั้นบัญชีนี้จะล็อกอินไม่ได้")
+		return
+	}
+	if req.UserGroupId == nil {
+		utils.Error(c, http.StatusBadRequest, "ต้องระบุ user_group_id ไม่งั้นบัญชีนี้จะล็อกอินไม่ได้")
 		return
 	}
 
