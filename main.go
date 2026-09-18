@@ -104,10 +104,21 @@ func main() {
 		maxOpen int
 		maxIdle int
 	}{
-		{"joyliday", config.DB, 15, 3},
-		{"pos", config.DB_POS, 10, 2},
-		{"jreader", config.DB_JREADER, 10, 2},
-		{"e-stamp", config.DB_ESTAMP, 10, 2},
+		// maxIdle ตั้งเท่ากับ maxOpen โดยตั้งใจ
+		//
+		// ค่าเดิมคือ 2-3 ซึ่งเป็น default ของ Go — ตอนตั้ง maxOpen ผมคิดแต่เรื่อง
+		// โควตา connection ของฐานข้อมูล ไม่ได้คิดถึงจำนวน round-trip ที่โค้ดใช้จริง
+		//
+		// ผลคือคำขอหนึ่งครั้งที่ยิง query เรียงกันหลายสิบครั้ง (เช่น เติมเงิน หรือ
+		// ยกเลิกบิล) จะคืน connection เข้า pool แล้วถูกปิดทิ้งทุกครั้งที่เกิน 2 ตัว
+		// query ถัดไปในคำขอเดียวกันจึงต้อง handshake TCP+TLS ใหม่กับ managed Postgres
+		//
+		// maxIdle ไม่ได้เพิ่มเพดานการใช้ connection — maxOpen ยังคุมอยู่เท่าเดิม
+		// จึงไม่กระทบโควตาที่คำนวณไว้ (ดูคอมเมนต์ด้านบนเรื่องเหตุ POS ล่ม 2026-09-15)
+		{"joyliday", config.DB, 15, 15},
+		{"pos", config.DB_POS, 10, 10},
+		{"jreader", config.DB_JREADER, 10, 10},
+		{"e-stamp", config.DB_ESTAMP, 10, 10},
 	}
 	for _, p := range pools {
 		if closer := tunePool(p.name, p.db, p.maxOpen, p.maxIdle); closer != nil {

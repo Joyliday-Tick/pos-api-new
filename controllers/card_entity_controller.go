@@ -752,10 +752,36 @@ func TopupCardPOS(c *gin.Context) {
 				Description:      &description,
 			}
 
-			services.SyncHistory(historys)
+			// SyncHistory เป็นการบันทึกประวัติฝั่ง CRM ไม่ใช่ตัวเงิน และไม่มีใคร
+			// ข้างล่างต้องใช้ผลของมัน จึงยิงขนานไปกับการอัปเดตแต้มได้
+			//
+			// วัดจริง 2026-09-18: แต่ละ call ไป CRM ใช้เวลาราว 1 วินาที (TLS ผ่าน
+			// Cloudflare) การแยกตัวนี้ออกมาจึงลดเวลาที่แคชเชียร์ต้องรอได้ราว 1 วินาที
+			//
+			// ของเดิมเขียน services.SyncHistory(historys) ทิ้ง error ไปเฉย ๆ
+			// ประวัติไม่ถูกบันทึกก็ไม่มีใครรู้ — คงพฤติกรรมเดิมไว้ (ไม่ทำให้ทั้งรายการล้ม
+			// เพราะเงินเข้าบัตรและออกบิลไปแล้ว) แต่เปลี่ยนเป็น log ให้เห็น
+			var syncHistoryWg sync.WaitGroup
+			syncHistoryWg.Add(1)
+			go func() {
+				defer syncHistoryWg.Done()
+				defer func() {
+					if r := recover(); r != nil {
+						fmt.Printf("[TOPUP] bill_no=%s: panic ระหว่างบันทึกประวัติ CRM: %v\n",
+							transactionNo, r)
+					}
+				}()
+				if status, _, err := services.SyncHistory(historys); err != nil || status != http.StatusOK {
+					fmt.Printf("[TOPUP] bill_no=%s member_tel=%s: บันทึกประวัติ CRM ไม่สำเร็จ "+
+						"(status=%d): %v — ยอดและบิลถูกบันทึกแล้ว ขาดแค่ประวัติฝั่ง CRM\n",
+						transactionNo, req.MemberTel, status, err)
+				}
+			}()
+
 			// update POS member point
 			member, err := services.UpdatePoint(freePoint, req.MemberTel)
 			if err != nil {
+				syncHistoryWg.Wait()
 				utils.Error(c, http.StatusInternalServerError, fmt.Sprintf("Failed to update point: %v", err))
 				return
 			}
@@ -775,6 +801,11 @@ func TopupCardPOS(c *gin.Context) {
 				MSkill5:    member.MSkill5,
 			}
 			statusCode, _, err := services.SyncScoreMember(scores)
+
+			// รอ goroutine บันทึกประวัติให้จบก่อนตอบกลับเสมอ ไม่ว่าทางไหน
+			// ปล่อยค้างไว้จะกลายเป็นงานที่วิ่งต่อหลัง handler จบ ซึ่งไล่ปัญหายาก
+			syncHistoryWg.Wait()
+
 			if err != nil {
 				utils.Error(c, http.StatusInternalServerError, fmt.Sprintf("Failed to update member crm: %v", err))
 				return

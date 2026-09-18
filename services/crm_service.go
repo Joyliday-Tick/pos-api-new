@@ -118,7 +118,7 @@ func GetCustomerByMobileNo(tel string) (int, *models.CustomerCrm, error) {
 	return res.StatusCode, &resp.Data, nil
 }
 
-func GetBranchByCode(code string) (int, *models.BranchCrm, error) {
+func fetchBranchByCodeFromCRM(code string) (int, *models.BranchCrm, error) {
 	endpoint := os.Getenv("CRM_ENDPOINT")
 	if endpoint == "" {
 		return 0, nil, errors.New("missing CRM_ENDPOINT in environment")
@@ -165,7 +165,7 @@ func GetBranchByCode(code string) (int, *models.BranchCrm, error) {
 	return res.StatusCode, &resp.Data, nil
 }
 
-func GetScoreType() (int, []models.ScoreType, error) {
+func fetchScoreTypesFromCRM() (int, []models.ScoreType, error) {
 	endpoint := os.Getenv("CRM_ENDPOINT")
 	if endpoint == "" {
 		return 0, nil, errors.New("missing CRM_ENDPOINT in environment")
