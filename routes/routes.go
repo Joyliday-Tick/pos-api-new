@@ -118,11 +118,11 @@ func SetupRouter(r *gin.Engine) {
 
 	//*member*//
 	api.POST("/member/name", controllers.UpdateMemberName)
-	api.POST("/member/deduct-joylicoin/:tel", controllers.UpdateJoylicoin)
-	api.POST("/member/deduct-totalpoint/:tel", controllers.UpdateTotalPoint)
+	api.POST("/member/deduct-joylicoin/:tel", middlewares.RequireRole(middlewares.RoleAdministrator, middlewares.RoleRMBackoffice, middlewares.RoleManager, middlewares.RoleAssistManager), controllers.UpdateJoylicoin)
+	api.POST("/member/deduct-totalpoint/:tel", middlewares.RequireRole(middlewares.RoleAdministrator, middlewares.RoleRMBackoffice, middlewares.RoleManager, middlewares.RoleAssistManager), controllers.UpdateTotalPoint)
 	api.GET("/member/search-sync/:tel", controllers.GetMemberByTelAndUpdate)
 	api.GET("/member/:tel", controllers.GetMemberByTel)
-	api.POST("/member/:tel", controllers.UpdateSkill)
+	api.POST("/member/:tel", middlewares.RequireRole(middlewares.RoleAdministrator, middlewares.RoleRMBackoffice, middlewares.RoleManager, middlewares.RoleAssistManager), controllers.UpdateSkill)
 	api.POST("/member", controllers.CreateMember)
 	api.PUT("/member", controllers.UpdateMember)
 
