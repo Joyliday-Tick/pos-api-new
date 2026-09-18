@@ -25,6 +25,9 @@ import (
 // @Success 200 {object} utils.StandardSuccessResponse
 // @Failure 500 {object} utils.StandardErrorResponse
 // @Router /api/claim-prize [post]
+// option ที่หักยอดจากบัตร — ใช้ชื่อแทนเลขลอย ๆ จะได้ค้นเจอและไม่ใส่ผิด
+const claimOptionDeductCard = 5
+
 func CreateClaimPrize(c *gin.Context) {
 	var req models.ClaimPrizeDto
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -41,6 +44,32 @@ func CreateClaimPrize(c *gin.Context) {
 		req.OptionID = nil
 	}
 
+	// ---------------------------------------------------------------------
+	// ตรวจยอดในบัตรให้ผ่านก่อนเขียนอะไรทั้งนั้น
+	//
+	// เดิม CreateClaimPrize commit เป็นอย่างแรก แล้วค่อยไปหักยอดใน goroutine
+	// ถ้าหักไม่ได้ (ยอดไม่พอ) จะเหลือแถว claim_prize ที่บอกว่าลูกค้าแลกของไปแล้ว
+	// ทั้งที่ไม่ได้จ่ายอะไรเลย และแคชเชียร์เห็น 500 ก็กดซ้ำ ได้แถวใหม่ทุกครั้ง
+	//
+	// ทำซ้ำได้จริงเมื่อ 2026-09-18: ขอแลก 99999 จากบัตร TEST023 ที่มี 500
+	// -> ตอบ error ถูกต้อง แต่ claim_prize เพิ่มจาก 38 เป็น 39 โดยไม่หัก coin
+	//
+	// เช็คที่นี่ก่อนเพราะเป็นความล้มเหลวที่เกิดบ่อยที่สุด (ยอดไม่พอ)
+	// ให้จบตั้งแต่ยังไม่มีอะไรถูกเขียน
+	// ---------------------------------------------------------------------
+	if req.OptionID != nil && *req.OptionID == claimOptionDeductCard && req.CardNo != nil {
+		deposits, err := services.FindCardDepositByCardNo(*req.CardNo)
+		if err != nil {
+			utils.Error(c, http.StatusInternalServerError,
+				fmt.Sprintf("ตรวจยอดในบัตรไม่สำเร็จ: %v", err))
+			return
+		}
+		if _, _, err := applyCardWithdrawClaim(req, deposits); err != nil {
+			utils.Error(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
 	claim, err := services.CreateClaimPrize(req)
 	if err != nil {
 		utils.Error(c, http.StatusBadRequest, fmt.Sprintf("Failed to create claim prize: %v", err))
@@ -49,8 +78,32 @@ func CreateClaimPrize(c *gin.Context) {
 
 	req.CPDate = claim.CPDate
 
+	// ---------------------------------------------------------------------
+	// หักยอดก่อน แล้วค่อยพลิกตัวนับ
+	//
+	// เดิมทั้งสามอย่างวิ่งขนานกัน ตัวนับจึงถูกพลิกเป็น 'N' (= ใช้สิทธิ์ไปแล้ว)
+	// ต่อให้การหักยอดล้มเหลว ลูกค้าเสียสิทธิ์ที่สะสมมาโดยไม่ได้ของ
+	//
+	// ตัวนับอยู่คนละฐาน (DB_JREADER) จึงรวมเป็นทรานแซกชันเดียวกับการหักยอดไม่ได้
+	// ทำได้แค่เรียงลำดับให้ถูก: ของที่ย้อนยากที่สุดไว้ท้ายสุด
+	// ---------------------------------------------------------------------
+	if req.OptionID != nil && *req.OptionID != 0 {
+		if err := handleClaimOption(*req.OptionID, req, userId, claim.CPID.String()); err != nil {
+			// ถึงตรงนี้แถว claim_prize ถูกเขียนไปแล้ว และการหักอาจสำเร็จบางส่วน
+			// (ยอดไม่พอถูกกรองไปตั้งแต่ด่านบนแล้ว เหลือแต่ความล้มเหลวระหว่างทาง)
+			fmt.Printf("[CLAIM] cp_id=%s card_no=%v member_tel=%s: หักยอดไม่สำเร็จ: %v "+
+				"— แถว claim_prize ถูกเขียนไปแล้วและอาจหักไปบางส่วน ต้องตรวจก่อนให้ลูกค้าแลกใหม่\n",
+				claim.CPID, req.CardNo, req.MemberTel, err)
+			utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+				"%v (เลขอ้างอิง %s: ตรวจยอดในบัตรก่อนให้แลกใหม่ ห้ามกดซ้ำทันที)",
+				err, claim.CPID))
+			return
+		}
+	}
+
+	// ตัวนับ — พลิกหลังหักยอดสำเร็จแล้วเท่านั้น
 	var wg sync.WaitGroup
-	errChan := make(chan error, 3)
+	errChan := make(chan error, 2)
 
 	wg.Add(1)
 	go func() {
@@ -60,7 +113,6 @@ func CreateClaimPrize(c *gin.Context) {
 		}
 	}()
 
-	//parallel update prize counter
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -69,29 +121,21 @@ func CreateClaimPrize(c *gin.Context) {
 		}
 	}()
 
-	// parallel handle option
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if req.OptionID != nil && *req.OptionID != 0 {
-			if err := handleClaimOption(*req.OptionID, req, userId, claim.CPID.String()); err != nil {
-				errChan <- err
-			}
-		}
-	}()
-
-	//รอทุกงานเสร็จ
 	wg.Wait()
 	close(errChan)
 
-	//ตรวจ error ทั้งหมด
 	var allErrors []string
 	for e := range errChan {
 		allErrors = append(allErrors, e.Error())
 	}
 
 	if len(allErrors) > 0 {
-		utils.Error(c, http.StatusInternalServerError, strings.Join(allErrors, " | "))
+		// ยอดถูกหักเรียบร้อยแล้ว ตัวนับพลิกไม่สำเร็จเป็นงานพ่วง
+		fmt.Printf("[CLAIM] cp_id=%s member_tel=%s: หักยอดสำเร็จแล้วแต่พลิกตัวนับไม่สำเร็จ: %s\n",
+			claim.CPID, req.MemberTel, strings.Join(allErrors, " | "))
+		utils.Error(c, http.StatusInternalServerError, fmt.Sprintf(
+			"%s (เลขอ้างอิง %s: ยอดในบัตรถูกหักเรียบร้อยแล้ว ห้ามกดแลกซ้ำ)",
+			strings.Join(allErrors, " | "), claim.CPID))
 		return
 	}
 
