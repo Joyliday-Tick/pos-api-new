@@ -59,8 +59,6 @@ route ที่รับค่าจาก query string (เช่น `card/chec
 
 ### 2. route ที่ขยับยอดเงินแต่ไม่ได้ติด `RequireRole` — แก้บางส่วน `7647056`
 
-| route | ผล |
-|---|---|
 | route | ผล | สถานะ |
 |---|---|---|
 | `POST /api/member/:tel` (`UpdateSkill`) | `UPDATE member SET mskill1 = mskill1 + ?` ไม่มีเพดาน ไม่ตรวจเครื่องหมาย สร้างแต้มได้ไม่จำกัด ไม่มีแถว `adjust_point` จึงไม่โผล่ในรายงานที่หัวหน้าตรวจ | **แก้แล้ว** |
