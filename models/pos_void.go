@@ -21,11 +21,16 @@ type PosVoidDto struct {
 }
 
 type PosVoid struct {
-	VoidID     uuid.UUID `gorm:"column:void_id;type:uuid;default:uuid_generate_v4();primaryKey" json:"void_id"`
-	BillNo     string    `gorm:"column:bill_no;type:varchar(50)" json:"bill_no"`
-	VoidDate   time.Time `gorm:"column:void_date;default:now()" json:"void_date"`
-	VoidUser   string    `gorm:"column:void_user;type:varchar(100)" json:"void_user"`
-	VoidReason string    `gorm:"column:void_reason;type:varchar(100)" json:"void_reason"`
+	VoidID uuid.UUID `gorm:"column:void_id;type:uuid;default:uuid_generate_v4();primaryKey" json:"void_id"`
+	// varchar(100) ตามคอลัมน์จริง (ตรวจ 2026-09-19) — ไม่ใช่ 50 เหมือน pos_transaction.bill_no
+	BillNo   string    `gorm:"column:bill_no;type:varchar(100)" json:"bill_no"`
+	VoidDate time.Time `gorm:"column:void_date;default:now()" json:"void_date"`
+	VoidUser string    `gorm:"column:void_user;type:varchar(100)" json:"void_user"`
+	// คอลัมน์จริงในฐานข้อมูลเป็น varchar(500) ไม่ใช่ 100 — ไม่กระทบตอน insert
+	// เพราะ GORM ใช้ type tag เฉพาะตอน migrate แต่ถ้าวันหนึ่งมีใครรัน AutoMigrate
+	// tag ที่ผิดจะหดคอลัมน์และตัดข้อความที่ยาวกว่า 100 ทิ้ง ซึ่งเส้นทาง ForceVoid
+	// เขียนส่วนต่างยอดลงช่องนี้ จึงยาวเกิน 100 ได้จริง
+	VoidReason string `gorm:"column:void_reason;type:varchar(500)" json:"void_reason"`
 }
 
 func (PosVoid) TableName() string {

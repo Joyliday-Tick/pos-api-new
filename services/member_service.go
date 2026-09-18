@@ -360,10 +360,22 @@ func UpdateAdjustPoint(input models.AdjustPointDto) (models.Member, error) {
 
 	updateDate := utils.TimeNowAsia()
 
+	// adj_estamp ขยับสองคอลัมน์ด้วยค่าเดียวกัน (ecoin และ estamp) แต่ controller
+	// ตรวจเพดานให้แค่ ecoin — ตรวจข้อมูล 2026-09-18: สมาชิก 8198 คน มีแค่ 16 คน
+	// ที่ ecoin = estamp ส่วนใหญ่ estamp = 0 ขณะที่ ecoin มีค่าจริง การหัก E-Stamp
+	// จากสมาชิกทั่วไปจึงทำให้ estamp ติดลบ
+	//
+	// ปัดพื้นที่ 0 แทนการปฏิเสธรายการ เพราะเพดานจริงของธุรกรรมนี้คือ ecoin
+	// (ที่ controller ตรวจแล้ว) ถ้ามาปฏิเสธเพราะ estamp ไม่พอจะบล็อกการหัก E-Stamp
+	// ของสมาชิกเกือบทุกคนซึ่งวันนี้ทำได้ปกติ — ใช้รูปแบบเดียวกับที่ bonus
+	// ถูกปัดพื้นอยู่แล้วใน UpdateDepositJubuJibi
+	//
+	// ยังเหลือคำถามที่ต้องให้เจ้าของระบบตอบ: ecoin กับ estamp ตั้งใจให้หมายถึง
+	// อะไรกันแน่ ถ้าเป็นคนละอย่างก็ควรแยกช่องปรับออกจากกัน ไม่ใช่ใช้ค่าเดียวขยับทั้งคู่
 	result := config.DB_POS.Exec(`
-		UPDATE member 
-		SET 
-			bonus       = bonus + ?, 
+		UPDATE member
+		SET
+			bonus       = bonus + ?,
 			total_point = total_point + ?, 
 			ecoin       = ecoin + ?, 
 			finwow      = finwow + ?, 
@@ -373,8 +385,8 @@ func UpdateAdjustPoint(input models.AdjustPointDto) (models.Member, error) {
 			mskill4     = mskill4 + ?,
 			mskill5     = mskill5 + ?,
 			jubu_jibi   = jubu_jibi + ?,
-			estamp	  = estamp + ?,
-			update_date = ? 
+			estamp      = CASE WHEN estamp + ? < 0 THEN 0 ELSE estamp + ? END,
+			update_date = ?
 		WHERE tel = ?`,
 		input.AdjJoylicoin, // bonus
 		input.AdjPoint,     // total_point
@@ -386,7 +398,8 @@ func UpdateAdjustPoint(input models.AdjustPointDto) (models.Member, error) {
 		input.AdjMskill4,   // mskill4
 		input.AdjMskill5,   // mskill5
 		input.AdjJubuJibi,  // jubu_jibi
-		input.AdjEstamp,    // estamp
+		input.AdjEstamp,    // estamp (เงื่อนไข CASE)
+		input.AdjEstamp,    // estamp (ค่าที่เขียนจริง)
 		updateDate,
 		input.MemberTel,
 	)

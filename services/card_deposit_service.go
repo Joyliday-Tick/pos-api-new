@@ -232,12 +232,24 @@ func UpdateCardDepositBalance(input models.CardDepositBalanceDto) (models.CardDe
 	//
 	// ขั้นตอนนี้เป็นงานพ่วง ไม่ใช่ส่วนของการหักยอด (ยอดถูกหักสำเร็จไปแล้วด้านบน)
 	// ถ้าล้มเหลวจึงแค่ log ไม่ return error ไม่งั้นผู้เรียกจะ retry แล้วหักซ้ำ
+	// ต้องหมดทั้งสามยอดถึงจะปิด เดิมดูแค่ balance_coin ทำให้โปรโมชันที่ให้ bonus
+	// อย่างเดียว (coin = 0 ตั้งแต่ต้น bonus = 300) ถูกปิดสิทธิ์เล่นทันทีที่หักครั้งแรก
+	// ทั้งที่ยอด bonus ยังอยู่ครบ เช่นเดียวกับ deposit ที่เหลือแต่ discount cash
+	//
+	// การปิดช้าไปหนึ่งครั้งไม่เสียหาย (ครั้งถัดไปยอดไม่พอ UPDATE ก็ไม่โดนแถวแล้ว)
+	// แต่การปิดเร็วไปคือการยึดสิทธิ์ที่ลูกค้าจ่ายเงินมาแล้ว จึงเลือกทางที่ปิดยากกว่า
+	//
+	// discount cash เทียบ <= 0 ไม่ใช่ == 0 เพราะเป็น float32 การลบซ้ำ ๆ
+	// ทำให้ยอดที่ควรเป็น 0 พอดีไปจบที่ -0.0000019 ได้ (ดูข้อ 10 ใน SECURITY_AUDIT)
 	var depositID []string
 	depositID = append(depositID, input.ID.String())
 	deposit, err := FindCardDepositByIds(depositID)
 	if err != nil {
 		fmt.Printf("card deposit %s: อ่านยอดคงเหลือหลังหักไม่สำเร็จ: %v\n", input.ID, err)
-	} else if len(deposit) > 0 && deposit[0].BalanceCoin == 0 {
+	} else if len(deposit) > 0 &&
+		deposit[0].BalanceCoin == 0 &&
+		deposit[0].BalanceBonus == 0 &&
+		deposit[0].BalanceDiscountCash <= 0 {
 		if err := UpdateCardPlayIsDelete(input.ID); err != nil {
 			fmt.Printf("card deposit %s: ปิด card play ไม่สำเร็จ: %v\n", input.ID, err)
 		}
