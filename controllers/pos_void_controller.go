@@ -83,6 +83,7 @@ func CreatePosVoid(c *gin.Context) {
 
 	cardMemberTel := ""
 	cardType := ""
+	voidMode := voidModeNormal
 	var cardTimePlay models.EtimesDto
 	packageEcoin, packcageEbonus, packagePlayTime := 0, 0, 0
 	if req.CardNo != "" {
@@ -104,10 +105,41 @@ func CreatePosVoid(c *gin.Context) {
 		}
 
 		cardType = checkCardType.CardTypeName
-		// fmt.Println("Card type:", cardType)
+
+		// ---------------------------------------------------------------------
+		// ตัดสินว่าจะยกเลิกแบบแพ็กเกจ/เวลาเล่น หรือแบบคืนยอดเหรียญปกติ
+		// โดยดู "เมนูที่บิลนี้ขาย" ไม่ใช่ "ชนิดบัตร"
+		//
+		// เดิมใช้ cardType ตรง ๆ ทั้งที่บัตร Package/Time play เติมเงินเหรียญ
+		// ธรรมดาได้ บิลเติมเงิน (pos_menu STD0001 "เติมเงิน/แลกเหรียญ" ที่
+		// machine_group_id = 0) บนบัตร Package จึงถูกบังคับไปทางแพ็กเกจ
+		// แล้วไปหา card_play_machine ที่ผูกกับ machine group ของเมนูนั้น
+		// ซึ่งไม่มี -> ตอบ 400 "ไม่พบรายละเอียดแพ็กเกจ" และยกเลิกไม่ได้เลย
+		//
+		// ตรวจ UAT 2026-09-18: บิลที่ยังไม่ยกเลิกและติดกับดักนี้มี 31 ใบ
+		// (บัตร Package 15, Time play 16) ส่วนบิลที่ขายแพ็กเกจจริง 311 ใบ
+		// ยังหา card_play_machine เจอเหมือนเดิม จึงไม่กระทบ
+		//
+		// คิดครั้งเดียวที่นี่แล้วใช้ทั้งตอน precheck ข้างล่างและตอนขั้นที่ 2
+		// ถ้าแก้แค่ precheck ขั้นที่ 2 จะยังเข้าสาขา Package แล้วเรียก ClearCard
+		// ล้างบัตรทั้งใบด้วย packageEcoin = 0 ซึ่งแย่กว่าเดิม
+		// ---------------------------------------------------------------------
+		soldPackage, err := billSoldPackageMenu(existSub)
+		if err != nil {
+			utils.Error(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if soldPackage {
+			switch cardType {
+			case "Time play":
+				voidMode = voidModeTimePlay
+			case "Package":
+				voidMode = voidModePackage
+			}
+		}
+
 		if req.DeductCard {
-			fmt.Println("Deduct card")
-			if cardType == "Time play" {
+			if voidMode == voidModeTimePlay {
 				cardPlayTime, err := handleCardPlayTimeVoidProcess(req)
 				// fmt.Println("Time play", cardPlayTime)
 				if err != nil {
@@ -119,9 +151,8 @@ func CreatePosVoid(c *gin.Context) {
 					cardTimePlay = *cardPlayTime
 				}
 			}
-			if cardType == "Package" {
+			if voidMode == voidModePackage {
 				packageEcoin, packcageEbonus, packagePlayTime, err = handleCardPackageVoidProcess(req, existSub)
-				// fmt.Println("Package", packageEcoin, packcageEbonus, packagePlayTime)
 				if err != nil {
 					utils.Error(c, http.StatusBadRequest, err.Error())
 					return
@@ -176,9 +207,10 @@ func CreatePosVoid(c *gin.Context) {
 	// ขั้น 2: คืนยอดในบัตร
 	if err := func() error {
 		if req.CardNo != "" {
-			switch cardType {
-			case "Time play":
-				fmt.Println("time play")
+			// สาขาเดียวกับ precheck ข้างบน — ใช้ voidMode ไม่ใช่ cardType
+			// (ดูเหตุผลที่คอมเมนต์ยาวตรงที่คำนวณ voidMode)
+			switch voidMode {
+			case voidModeTimePlay:
 				var playTime int
 				if cardTimePlay.PlayTime != 0 {
 					playTime = cardTimePlay.PlayTime
@@ -198,9 +230,7 @@ func CreatePosVoid(c *gin.Context) {
 				if _, err := services.ClearCard(clearCard, userId); err != nil {
 					return fmt.Errorf("failed to clear card: %w", err)
 				}
-			case "Package":
-				fmt.Println("package")
-				fmt.Println("Package", packageEcoin, packcageEbonus, packagePlayTime)
+			case voidModePackage:
 				clearCard := models.ClearCardDto{
 					CardNo:        req.CardNo,
 					MemberTel:     cardMemberTel,
@@ -216,9 +246,7 @@ func CreatePosVoid(c *gin.Context) {
 				}
 
 			default:
-				fmt.Println("other")
 				if req.DeductCard {
-					fmt.Println("other deduct card")
 					if err := handleCardVoidProcess(req, existTransaction, existSub, userId, cardMemberTel, cardType); err != nil {
 						return fmt.Errorf("failed to void card process: %w", err)
 					}
@@ -364,11 +392,44 @@ func handleCardVoidProcess(req models.PosVoidDto,
 		}
 	}
 
+	// ---------------------------------------------------------------------
+	// ปิดบัตรให้เรียบร้อยถ้ายกเลิกบิลแล้วบัตรว่างเปล่า
+	//
+	// ⚠️ ต้องเช็คสองชั้น เดิมเช็คแค่ CheckCardInfo ซึ่งไม่ตรงกับยอดดิบ
+	//
+	// เหตุการณ์จริง 2026-09-18: ยกเลิกบิล JYN-9-2603300003 (100 coin) บนบัตร
+	// F443416C ที่มียอดดิบเหลือ 7630 coin / 1130 bonus แต่ CheckCardInfo
+	// รายงาน 0/0 (กรองวันหมดอายุ — บัตรใบนั้นเคยถูก clear ไปเมื่อ พ.ค. 2026)
+	// เงื่อนไขชั้นเดียวจึงเป็นจริง แล้ว ClearCard ปิด deposit ทั้ง 72 แถว
+	// ลบ card_play 40 แถว และบันทึก clear_card ว่ายอด 0/0 ทั้งที่ของจริง 7630
+	// การยกเลิกบิลใบเดียวลากไปล้างมูลค่าทั้งใบ
+	//
+	// FindCardDepositByCardNo กรอง is_active AND (balance_coin > 0 OR
+	// balance_bonus > 0) อยู่แล้ว ถ้าคืน 0 แถวก็คือยอดดิบเป็นศูนย์จริง
+	// ---------------------------------------------------------------------
 	checkCard, err := services.CheckCardInfo(req.CardNo)
 	if err != nil {
 		return fmt.Errorf("failed to check card: %w", err)
 	}
 	if checkCard.ECoin == 0 && checkCard.EBonus == 0 {
+		remaining, err := services.FindCardDepositByCardNo(req.CardNo)
+		if err != nil {
+			return fmt.Errorf("failed to verify remaining balance before clearing card: %w", err)
+		}
+
+		if len(remaining) > 0 {
+			// ยอดดิบยังมีอยู่ ห้ามล้าง — ดังไว้ให้เห็นว่าทั้งสองแหล่งไม่ตรงกัน
+			var rawCoin, rawBonus int
+			for _, d := range remaining {
+				rawCoin += d.BalanceCoin
+				rawBonus += d.BalanceBonus
+			}
+			fmt.Printf("[VOID] bill_no=%s card_no=%s: ไม่ล้างบัตร เพราะ CheckCardInfo รายงาน 0/0 "+
+				"แต่ยอดดิบยังเหลือ %d coin / %d bonus ใน %d deposit — คืนยอดของบิลนี้เรียบร้อยแล้ว\n",
+				req.BillNo, req.CardNo, rawCoin, rawBonus, len(remaining))
+			return nil
+		}
+
 		clearCard := models.ClearCardDto{
 			CardNo:        req.CardNo,
 			MemberTel:     cardMemberTel,
@@ -540,8 +601,42 @@ func handleCardPlayTimeVoidProcess(req models.PosVoidDto) (*models.EtimesDto, er
 	return cardPlayTimes, nil
 }
 
+// โหมดการยกเลิก — ตัดสินจากเมนูที่บิลขาย ไม่ใช่ชนิดบัตร
+const (
+	voidModeNormal   = "normal"
+	voidModePackage  = "package"
+	voidModeTimePlay = "timeplay"
+)
+
+// billSoldPackageMenu บอกว่าบิลนี้ขายเมนูที่ผูกกับ machine group (คือแพ็กเกจ) หรือไม่
+//
+// machine_group_id เป็น 0 หรือ NULL แปลว่าเป็นเมนูเติมเงิน/แลกเหรียญธรรมดา
+// ซึ่งขายบนบัตรชนิดไหนก็ได้ รวมถึงบัตร Package และ Time play
+func billSoldPackageMenu(existSub []models.PosSubTransactionData) (bool, error) {
+	for _, sub := range existSub {
+		menu, err := services.FindPosMenuById(sub.ProductID)
+		if err != nil {
+			return false, fmt.Errorf("failed to find pos menu %d: %w", sub.ProductID, err)
+		}
+		if menu == nil {
+			continue
+		}
+		if menu.MachineGroupID != nil && *menu.MachineGroupID > 0 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func handleCardPackageVoidProcess(req models.PosVoidDto, existSub []models.PosSubTransactionData) (int, int, int, error) {
 	packageEcoin, packageEbonus, packagePlayTime := 0, 0, 0
+
+	// FindSubTransactionByBillNo คืน nil เมื่อไม่พบแถว existSub[0] จึง panic ได้
+	// ตรวจ UAT 2026-09-18: มีบิลที่ยังไม่ยกเลิกและไม่มี pos_sub_transaction เลย 3 ใบ
+	// (1 ใบอยู่บนบัตร Package) ซึ่งจะ panic แทนที่จะได้ error ที่อ่านรู้เรื่อง
+	if len(existSub) == 0 {
+		return 0, 0, 0, fmt.Errorf("บิล %s ไม่มีรายการสินค้า จึงตรวจแพ็กเกจไม่ได้", req.BillNo)
+	}
 
 	posMenuID := existSub[0].ProductID
 
