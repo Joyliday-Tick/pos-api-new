@@ -10,6 +10,12 @@ type PosVoidDto struct {
 	BillNo     string `json:"bill_no"`
 	VoidUser   string `json:"void_user"`
 	VoidReason string `json:"void_reason"`
+	// ForceVoid = ผู้จัดการอนุมัติทับกรณียอดในบัตรไม่พอให้คืน
+	//
+	// ปกติถ้าลูกค้าเติมเงินแล้วเล่นไปหมด การยกเลิกบิลจะถูกปฏิเสธด้วย 409
+	// เพราะคืนยอดไม่ครบ ธงนี้บอกว่ามีผู้มีสิทธิ์รับทราบและยืนยันให้ทำต่อ
+	// โดยหักเท่าที่มีจริง ไม่ทำให้ยอดติดลบ และบันทึกส่วนต่างลง void_reason
+	ForceVoid  bool   `json:"force_void"`
 	CardNo     string `json:"card_no"`
 	DeductCard bool   `json:"deduct_card"`
 }

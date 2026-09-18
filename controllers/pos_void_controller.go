@@ -161,8 +161,6 @@ func CreatePosVoid(c *gin.Context) {
 		} else {
 			req.VoidReason = "U-" + req.VoidReason
 		}
-
-		fmt.Println("Not deduct card")
 	} else {
 		req.VoidReason = "U-" + req.VoidReason
 	}
@@ -196,6 +194,56 @@ func CreatePosVoid(c *gin.Context) {
 	// แลกกับกรณีที่พังตั้งแต่ยังไม่เขียนอะไร ซึ่งก็จะถูกล็อกไปด้วย — ยอมรับได้
 	// เพราะ "ต้องเรียกคนมาดู" ปลอดภัยกว่า "หักเงินลูกค้าซ้ำ"
 	// ---------------------------------------------------------------------
+
+	// ---------------------------------------------------------------------
+	// ตรวจว่าคืนยอดได้ครบไหม ก่อนจองบิล
+	//
+	// ลูกค้าเติมเงินแล้วเล่นไปหมด ยอดในบัตรจึงไม่พอให้กลับรายการ
+	// ของเดิมปล่อยให้หักเท่าที่มีแล้วรายงานว่าสำเร็จ ส่วนต่างหายไปเงียบ ๆ
+	// (และก่อนมี guard ของ UpdateCardDepositBalance ยอดจะติดลบไปเลย
+	//  ซึ่งเป็นที่มาของแถวติดลบ 5 แถวที่เจอใน UAT)
+	//
+	// ตรวจ UAT 2026-09-18: บิลอายุ 8-30 วันที่คืนไม่ครบมี 145 จาก 581 ใบ (25%)
+	// จึงไม่ใช่เคสหายาก ต้องมีทางออกที่ชัดเจน ไม่ใช่ปฏิเสธแล้วจบ
+	//
+	// ทางออกที่เจ้าของระบบเลือก: ให้ผู้มีสิทธิ์อนุมัติทับได้ โดย
+	//   - หักเท่าที่มีจริง ไม่ทำให้ยอดติดลบ
+	//   - บันทึกว่าใครอนุมัติและขาดเท่าไรลง void_reason
+	// ---------------------------------------------------------------------
+	if req.CardNo != "" && req.DeductCard && voidMode == voidModeNormal {
+		_, _, shortCoin, shortBonus, planErr := buildVoidPlan(req, existTransaction, existSub)
+		if planErr != nil {
+			utils.Error(c, http.StatusInternalServerError, planErr.Error())
+			return
+		}
+
+		if shortCoin > 0 || shortBonus > 0 {
+			if !req.ForceVoid {
+				utils.Error(c, http.StatusConflict, fmt.Sprintf(
+					"ยอดในบัตร %s ไม่พอให้กลับรายการบิล %s (ขาด e_coin %d, e_bonus %d) "+
+						"ลูกค้าใช้ยอดนี้ไปแล้ว ต้องให้ผู้จัดการอนุมัติทับจึงจะยกเลิกได้",
+					req.CardNo, req.BillNo, shortCoin, shortBonus))
+				return
+			}
+
+			// ธงอนุมัติทับต้องมาพร้อมสิทธิ์จริง ไม่ใช่แค่ส่ง json มา
+			// route นี้ถูก RequireRole กั้นอยู่แล้ว แต่เช็คซ้ำที่นี่เพราะ
+			// หน้าจอ POS เรียกผ่าน service account ที่เป็น Administrator
+			// การเช็คตรงนี้จึงกันได้เฉพาะคนที่ยิง API ตรงด้วยบัญชีตัวเอง
+			roleId, roleErr := middlewares.GetRoleIdFromClaims(c)
+			if roleErr != nil || !canApproveForceVoid(roleId) {
+				utils.Error(c, http.StatusForbidden,
+					"การอนุมัติทับต้องใช้สิทธิ์ผู้จัดการขึ้นไป")
+				return
+			}
+
+			req.VoidReason = annotateForceVoidReason(req.VoidReason, req.VoidUser, shortCoin, shortBonus)
+
+			fmt.Printf("[VOID] bill_no=%s card_no=%s: อนุมัติทับโดย %s (roleId=%d) "+
+				"ยอดไม่พอ ขาด coin %d bonus %d — หักเท่าที่มีจริง\n",
+				req.BillNo, req.CardNo, req.VoidUser, roleId, shortCoin, shortBonus)
+		}
+	}
 
 	// ขั้น 1: จองบิล
 	posVoid, err := services.CreatePosVoid(req)
@@ -341,12 +389,13 @@ func CreatePosVoid(c *gin.Context) {
 
 }
 
-func handleCardVoidProcess(req models.PosVoidDto,
+// buildVoidPlan อ่านข้อมูลแล้วคำนวณว่าจะคืนยอดจาก deposit ไหนเท่าไร
+//
+// เป็นการอ่านล้วน ไม่เขียนอะไร จึงเรียกล่วงหน้าเพื่อดูส่วนต่างก่อนตัดสินใจได้
+// shortCoin/shortBonus = ส่วนที่หาที่คืนไม่ได้ เพราะยอดในบัตรถูกใช้ไปแล้ว
+func buildVoidPlan(req models.PosVoidDto,
 	existTransaction *models.PosTransaction,
-	existSub []models.PosSubTransactionData,
-	userId int,
-	cardMemberTel string,
-	cardType string) error {
+	existSub []models.PosSubTransactionData) ([]models.CardWithdrawDto, []models.CardDepositBalanceDto, int, int, error) {
 
 	cardDepositIds := make([]string, len(existSub))
 	for i, sub := range existSub {
@@ -355,12 +404,12 @@ func handleCardVoidProcess(req models.PosVoidDto,
 
 	cardDepositWithSub, err := services.FindCardDepositByIds(cardDepositIds)
 	if err != nil {
-		return fmt.Errorf("failed to find card deposit by ids: %w", err)
+		return nil, nil, 0, 0, fmt.Errorf("failed to find card deposit by ids: %w", err)
 	}
 
 	cardDeposits, err := services.FindCardDepositByCardNo(req.CardNo)
 	if err != nil {
-		return fmt.Errorf("failed to find card deposit: %w", err)
+		return nil, nil, 0, 0, fmt.Errorf("failed to find card deposit: %w", err)
 	}
 
 	idMap := map[string]bool{}
@@ -375,10 +424,26 @@ func handleCardVoidProcess(req models.PosVoidDto,
 		}
 	}
 
-	e_coin := existTransaction.ECoin
-	e_bonus := existTransaction.EBonus
+	deducts, updates, shortCoin, shortBonus := applyCardWithdrawLogic(
+		req, existTransaction, existSub, cardDepositWithSub, cardDepositNotSub,
+		existTransaction.ECoin, existTransaction.EBonus)
 
-	deducts, updateCardDeposits := applyCardWithdrawLogic(req, existTransaction, existSub, cardDepositWithSub, cardDepositNotSub, e_coin, e_bonus)
+	return deducts, updates, shortCoin, shortBonus, nil
+}
+
+func handleCardVoidProcess(req models.PosVoidDto,
+	existTransaction *models.PosTransaction,
+	existSub []models.PosSubTransactionData,
+	userId int,
+	cardMemberTel string,
+	cardType string) error {
+
+	// ส่วนต่างถูกตรวจและตัดสินไปแล้วที่ controller ก่อนจองบิล
+	// (ไม่พอ + ไม่มีอนุมัติทับ = ถูกปฏิเสธตั้งแต่ตอนนั้น ยังไม่เขียนอะไร)
+	deducts, updateCardDeposits, _, _, err := buildVoidPlan(req, existTransaction, existSub)
+	if err != nil {
+		return err
+	}
 
 	for _, wt := range deducts {
 		if _, err := services.CreateCardWithdraw(wt, userId); err != nil {
@@ -512,7 +577,13 @@ func applyCardWithdrawNotCard(req models.PosVoidDto, existTransaction *models.Po
 
 	return deducts, updateCardDeposits
 }
-func applyCardWithdrawLogic(req models.PosVoidDto, existTransaction *models.PosTransaction, existSub []models.PosSubTransactionData, withSub, notSub []models.CardDeposit, e_coin, e_bonus int) ([]models.CardWithdrawDto, []models.CardDepositBalanceDto) {
+
+// applyCardWithdrawLogic คืน (รายการ withdraw, รายการหักยอด, ส่วนต่าง coin, ส่วนต่าง bonus)
+//
+// สองค่าท้ายคือยอดที่หาที่คืนไม่ได้ เพราะลูกค้าใช้ไปแล้ว
+// เดิมฟังก์ชันนี้กลืนส่วนต่างไว้เงียบ ๆ (min() แล้วจบ) ผู้เรียกจึงไม่รู้ว่าคืนไม่ครบ
+// และการยกเลิกบิลก็รายงานว่าสำเร็จทั้งที่กลับรายการได้แค่บางส่วน
+func applyCardWithdrawLogic(req models.PosVoidDto, existTransaction *models.PosTransaction, existSub []models.PosSubTransactionData, withSub, notSub []models.CardDeposit, e_coin, e_bonus int) ([]models.CardWithdrawDto, []models.CardDepositBalanceDto, int, int) {
 	var deducts []models.CardWithdrawDto
 	var updateCardDeposits []models.CardDepositBalanceDto
 
@@ -573,7 +644,15 @@ func applyCardWithdrawLogic(req models.PosVoidDto, existTransaction *models.PosT
 		}
 	}
 
-	return deducts, updateCardDeposits
+	// เหลือเท่าไรคือหาที่คืนไม่ได้
+	if e_coin < 0 {
+		e_coin = 0
+	}
+	if e_bonus < 0 {
+		e_bonus = 0
+	}
+
+	return deducts, updateCardDeposits, e_coin, e_bonus
 }
 
 func min(a, b int) int {
@@ -599,6 +678,48 @@ func handleCardPlayTimeVoidProcess(req models.PosVoidDto) (*models.EtimesDto, er
 	}
 
 	return cardPlayTimes, nil
+}
+
+// ความยาวจริงของ pos_void.void_reason ในฐานข้อมูล
+//
+// โมเดล Go เขียน gorm type varchar(100) แต่คอลัมน์จริงเป็น varchar(500)
+// (ตรวจ information_schema 2026-09-18) ใช้ค่าจริงเป็นเกณฑ์ตัด
+// นับเป็นตัวอักษรไม่ใช่ไบต์ เพราะ Postgres varchar นับ character
+const voidReasonMaxLen = 500
+
+// canApproveForceVoid — ใครอนุมัติทับได้ ตรงกับ RequireRole ที่กั้น /pos-void อยู่
+func canApproveForceVoid(roleId int) bool {
+	switch roleId {
+	case middlewares.RoleAdministrator,
+		middlewares.RoleRMBackoffice,
+		middlewares.RoleManager,
+		middlewares.RoleAssistManager:
+		return true
+	}
+	return false
+}
+
+// annotateForceVoidReason ต่อข้อความอนุมัติทับเข้ากับเหตุผลเดิม
+//
+// เก็บลง void_reason ไปก่อนเพราะยังไม่เพิ่มคอลัมน์ — ฐานข้อมูลนี้ใช้ร่วมกับ
+// ระบบเดิมที่ยังทำงานอยู่ การเพิ่มคอลัมน์ต้องรอตกลงกันก่อน
+// ถ้ายาวเกิน จะตัดเหตุผลเดิมทิ้ง ไม่ตัดข้อความอนุมัติ เพราะส่วนนั้นคือหลักฐาน
+func annotateForceVoidReason(reason, approver string, shortCoin, shortBonus int) string {
+	note := fmt.Sprintf(" [อนุมัติทับโดย %s ยอดไม่พอ ขาด coin %d bonus %d]",
+		approver, shortCoin, shortBonus)
+
+	noteRunes := []rune(note)
+	if len(noteRunes) >= voidReasonMaxLen {
+		return string(noteRunes[:voidReasonMaxLen])
+	}
+
+	room := voidReasonMaxLen - len(noteRunes)
+	reasonRunes := []rune(reason)
+	if len(reasonRunes) > room {
+		reasonRunes = reasonRunes[:room]
+	}
+
+	return string(reasonRunes) + note
 }
 
 // โหมดการยกเลิก — ตัดสินจากเมนูที่บิลขาย ไม่ใช่ชนิดบัตร
