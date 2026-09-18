@@ -66,10 +66,23 @@ func CreateAdjustPoint(c *gin.Context) {
 		}
 	}
 
+	// adj_estamp ขยับสองคอลัมน์พร้อมกัน — member_service.go ทำ UPDATE ทั้ง
+	// ecoin และ estamp ด้วยค่าเดียวกัน แต่ตรวจเพดานที่นี่กับ ecoin อย่างเดียว
+	//
+	// ข้อความเดิมเขียนว่า "Estamp ไม่เพียงพอ ในระบบมี <ecoin>" ซึ่งอ่านแล้วงง
+	// เพราะเลขที่อ้างเป็นของ eCoin ไม่ใช่ของ E-Stamp และหน้าจอไม่เคยแสดงเลขนั้น
+	// (แก้หน้าจอให้โชว์ทั้งสองค่าแล้ว) จึงเขียนให้ตรงว่าเพดานคืออะไร
+	//
+	// ⚠️ ยังไม่ได้กัน estamp ติดลบ — ตรวจข้อมูล 2026-09-18: สมาชิก 8198 คน
+	// มีแค่ 16 คนที่ ecoin = estamp ส่วนใหญ่ estamp = 0 ขณะที่ ecoin มีค่าจริง
+	// การหัก E-Stamp จากสมาชิกทั่วไปจึงทำให้ estamp ติดลบได้ (ตอนนี้ยังไม่มีใครติดลบ)
+	// ยังไม่แก้เพราะต้องรู้ก่อนว่าสองคอลัมน์นี้ตั้งใจให้หมายถึงอะไร
 	if req.AdjEstamp < 0 {
 		deductAmount := -req.AdjEstamp // แปลงเป็นค่าบวก = จำนวนที่จะหัก
 		if findMember.Ecoin < deductAmount {
-			utils.Error(c, http.StatusBadRequest, fmt.Sprintf("Estamp ไม่เพียงพอ ในระบบมี %v", findMember.Ecoin))
+			utils.Error(c, http.StatusBadRequest, fmt.Sprintf(
+				"หัก E-Stamp ได้ไม่เกินยอด eCoin ซึ่งมีอยู่ %v (ขอหัก %v)",
+				findMember.Ecoin, deductAmount))
 			return
 		}
 	}
