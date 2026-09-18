@@ -64,17 +64,26 @@ route ที่รับค่าจาก query string (เช่น `card/chec
 | `POST /api/member/:tel` (`UpdateSkill`) | `UPDATE member SET mskill1 = mskill1 + ?` ไม่มีเพดาน ไม่ตรวจเครื่องหมาย สร้างแต้มได้ไม่จำกัด ไม่มีแถว `adjust_point` จึงไม่โผล่ในรายงานที่หัวหน้าตรวจ | **แก้แล้ว** |
 | `POST /api/member/deduct-joylicoin/:tel` | ล้างยอด Joylicoin ของสมาชิกคนไหนก็ได้ | **แก้แล้ว** |
 | `POST /api/member/deduct-totalpoint/:tel` | เหมือนกัน และ `UpdateTotalPoint` ไม่เรียก `GetUserIdFromClaims` เลย = ไม่มีใครถูกบันทึกว่าเป็นคนทำ | **แก้แล้ว** |
-| `POST /api/card/clear-card` | ล้างมูลค่าทั้งใบ ขณะที่ `DELETE card/:cardNo` ซึ่งเบากว่ากลับถูก guard | ตั้งใจยังไม่ติด |
-| `POST /api/claim-prize`, `POST /api/claim` | หักยอดบัตรผ่าน `CreateCardWithdraw`/`UpdateCardDepositBalance` แต่ไม่ถูก guard ทั้งที่ `refund-confirm` ข้าง ๆ ถูก guard | ตั้งใจยังไม่ติด |
+| `POST /api/card/clear-card` | ล้างมูลค่าทั้งใบ ขณะที่ `DELETE card/:cardNo` ซึ่งเบากว่ากลับถูก guard | **ไม่ติด — เจ้าของระบบตัดสินแล้ว** |
+| `POST /api/claim-prize`, `POST /api/claim` | หักยอดบัตรผ่าน `CreateCardWithdraw`/`UpdateCardDepositBalance` แต่ไม่ถูก guard ทั้งที่ `refund-confirm` ข้าง ๆ ถูก guard | **ไม่ติด — เจ้าของระบบตัดสินแล้ว** |
 
 สามตัวแรกติด `RequireRole(1-4)` แล้วใน `7647056` — ตรวจก่อนติดว่า **ไม่มี BFF ตัวไหนเรียกเลย**
 (`card/tel/[tel]` ยิง `GET /member/:tel` ซึ่งคนละ method) จึงไม่กระทบเส้นทางหน้าจอ
 ทดสอบแล้ว roleId 7 → 403, roleId 3 → 200 ทั้งสามตัว
 
-**สามตัวหลังตั้งใจไม่ติด — ต้องตัดสินเชิงนโยบายก่อน** เป็นงานที่พนักงานทำเป็นปกติ
-การ gate ไว้ที่ role 1-4 เป็นของหลอกในวันนี้ (BFF ยิงด้วย service account ที่เป็นแอดมิน
-ดู [[shared-service-account-limits-authz]]) และจะบล็อกงานปกติในวันที่ส่งตัวตนพนักงานจริงขึ้นไป
-คำถามที่ต้องตอบ: การล้างบัตรและการแลกของรางวัลต้องให้หัวหน้าอนุมัติหรือไม่
+**สามตัวหลัง: เจ้าของระบบตัดสินแล้วเมื่อ 18 ก.ย. ว่าไม่ต้องให้หัวหน้าอนุมัติ**
+การล้างบัตรและการแลกของรางวัลเป็นงานที่พนักงานหน้าร้านทำเป็นปกติ
+**ถือเป็นข้อยุติ ไม่ใช่งานค้าง** — อย่าไปเพิ่ม `RequireRole` ให้สาม route นี้ภายหลัง
+โดยอ้างว่า "เพื่อความสม่ำเสมอกับ refund-confirm"
+
+เหตุผลประกอบที่ทำให้การตัดสินนี้สมเหตุสมผล: การ gate ไว้ที่ role 1-4 เป็นของหลอก
+ในวันนี้อยู่แล้ว เพราะ BFF ยิงด้วย service account ที่เป็นแอดมิน
+(ดู [[shared-service-account-limits-authz]]) และจะกลายเป็นตัวบล็อกงานปกติ
+ทันทีที่ส่งตัวตนพนักงานจริงขึ้นไป
+
+สิ่งที่คุ้มครองสาม route นี้จึงเป็น**ความถูกต้องของตรรกะ** ไม่ใช่ด่านสิทธิ์ —
+ซึ่งแก้ไปแล้วในรอบนี้ (claim ตรวจยอดก่อนสร้างแถว, guard กัน ClearCard
+ล้างบัตรที่ยังมียอด, หักยอดทีละคู่เรียงกัน)
 
 ### 3. `card_deposit_service.go:240` ปิด card play โดยดูแค่ coin
 
