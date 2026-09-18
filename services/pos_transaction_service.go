@@ -448,7 +448,21 @@ func toSortedBankSummary(summary map[string]float64) []models.BankDetailSummary 
 func GenerateBillNo(PosID string) string {
 	var totalRecord int64
 
-	now := time.Now()
+	// ต้องใช้เวลาไทย ไม่ใช่ time.Now()
+	//
+	// bill_date เป็น timestamp without time zone และแอปเขียนลงไปด้วย
+	// utils.TimeNowAsia() ฉะนั้นค่าที่เก็บคือ "เวลาไทยแบบไม่มีโซน"
+	// ถ้าสร้างหน้าต่างนับจาก time.Now() จะได้เวลาตามโซนของ process
+	// ซึ่งใน container คือ UTC (ตรวจแล้ว TZ ว่าง, date ตอบ UTC)
+	// หน้าต่างกับข้อมูลจึงเพี้ยนกัน 7 ชั่วโมงทุกวัน
+	//
+	// อาการ: บิลที่ออกระหว่าง 00:00-07:00 ตามเวลาไทย จะไปนับรวมกับบิล
+	// ของเมื่อวาน และวันที่ในเลขบิลก็เป็นของเมื่อวานด้วย ขณะที่ bill_date
+	// เป็นวันนี้ — เลขบิลกับรายงานที่กรองด้วย bill_date จึงไม่ตรงกัน
+	// และตัวนับรีเซ็ตตอน 07:00 ไม่ใช่เที่ยงคืน
+	//
+	// ขัดกับจุดประสงค์ของ b90e38e ที่ใส่ day ลงเลขบิลเพื่อกันเลขซ้ำข้ามวัน
+	now := *utils.TimeNowAsia()
 	year, month, day := now.Date()
 
 	startOfDay := time.Date(year, month, day, 0, 0, 0, 0, now.Location())

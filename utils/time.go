@@ -20,15 +20,25 @@ func TimeNowPtr() *time.Time {
 	return &now
 }
 
+// TimeNowAsia คืนเวลาปัจจุบันตามเขตเวลาไทย
+//
+// ใช้กับทุกคอลัมน์วันที่ในระบบนี้ เพราะคอลัมน์เป็น timestamp without time zone
+// ค่าที่เก็บจึงเป็น "เวลาไทยแบบไม่มีโซน" ตรง ๆ
+// เวลาจะเทียบหรือจัดกลุ่มตามวัน/เดือน ต้องสร้างช่วงเวลาจากฟังก์ชันนี้ด้วย
+// ไม่ใช่ time.Now() ซึ่งใน container เป็น UTC (ดู GenerateBillNo)
+//
+// เดิมพิมพ์ 3 บรรทัดทุกครั้งที่ถูกเรียก และมันถูกเรียกในทุกเส้นทางที่ขยับเงิน
+// เสียงรบกวนนั้นกลบ log ที่ใช้ตามปัญหาจริง จึงเอาออก
+//
+// ⚠️ panic ถ้าโหลด tzdata ไม่ได้ — ตอนนี้ปลอดภัยเพราะ Dockerfile ใช้
+// golang:1.24 ซึ่งมี tzdata ติดมา ถ้าย้ายไป base image เล็กลง (alpine, scratch)
+// ต้อง import _ "time/tzdata" หรือติดตั้ง tzdata ไม่งั้นระบบจะตายทันทีที่บูต
 func TimeNowAsia() *time.Time {
 	loc, err := time.LoadLocation("Asia/Bangkok")
 	if err != nil {
 		panic(err)
 	}
 	now := time.Now().In(loc)
-	fmt.Println(now)
-	fmt.Println("DateTime (Bangkok):", now.Format("2006-01-02 15:04:05"))
-	fmt.Println("Timezone:", now.Location())
 	return &now
 }
 

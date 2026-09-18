@@ -10,7 +10,6 @@ import (
 	"new-pos-api/utils"
 
 	"os"
-	"time"
 	// "new-pos-api/utils"
 	// "gorm.io/gorm"
 )
@@ -90,7 +89,11 @@ func CreateBatchSubDeposit(subs []models.DepositSub) ([]models.DepositSub, error
 func GenerateDepositBillNo(PosID string) string {
 	var BillNo string
 	var totalRecord int64
-	currentDate := time.Now()
+	// เวลาไทยเหมือน GenerateBillNo — dh_date ถูกเขียนด้วยเวลาไทย
+	// ตัวนี้แบ่งช่วงเป็น "เดือน" ความเพี้ยน 7 ชั่วโมงจึงมีผลเฉพาะ 7 ชั่วโมงสุดท้าย
+	// ของวันสิ้นเดือน (เลขจะรีเซ็ตช้าไปหรือนับรวมกับเดือนก่อน) เจอยากกว่า
+	// ของเลขบิลมาก แต่เป็นบั๊กตัวเดียวกันและแก้ด้วยบรรทัดเดียวกัน
+	currentDate := *utils.TimeNowAsia()
 	YYYY := currentDate.Year()
 	YY := YYYY % 100
 	MMM := currentDate.Month()

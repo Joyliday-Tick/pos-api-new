@@ -9,7 +9,6 @@ import (
 	"new-pos-api/utils"
 
 	"os"
-	"time"
 	// "new-pos-api/utils"
 	// "gorm.io/gorm"
 )
@@ -83,7 +82,9 @@ func CreateBatchSubRedeem(subs []models.RedeemSub) ([]models.RedeemSub, error) {
 
 func GenerateRedeemBillNo(PosID string) string {
 	var totalRecord int64
-	currentDate := time.Now()
+	// เวลาไทยเหมือน GenerateBillNo — rh_date ถูกเขียนด้วยเวลาไทย
+	// แบ่งช่วงเป็นเดือน จึงเพี้ยนเฉพาะ 7 ชั่วโมงสุดท้ายของวันสิ้นเดือน
+	currentDate := *utils.TimeNowAsia()
 	YYYY := currentDate.Year()
 	YY := YYYY % 100
 	MM := int(currentDate.Month())
