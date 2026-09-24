@@ -798,7 +798,7 @@ type Deposit struct {
 	Id                  *uuid.UUID `json:"id"`
 	BalanceCoin         int64      `json:"balance_coin"`
 	BalanceBonus        int64      `json:"balance_bonus"`
-	BalanceDiscountCash float32    `json:"balance_discount_cash"`
+	BalanceDiscountCash float64    `json:"balance_discount_cash"`
 }
 
 // find card deposit by card play id

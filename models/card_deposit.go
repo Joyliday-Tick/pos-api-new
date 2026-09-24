@@ -25,8 +25,8 @@ type CardDepositDto struct {
 	OriginCoin      *int       `json:"origin_coin"`
 	OriginBonus     *int       `json:"origin_bonus"`
 	CardExpireDate  *time.Time `json:"card_expire_date"`
-	DiscountCash    float32        `json:"discount_cash"`
-	BalanceDiscountCash float32        `json:"balance_discount_cash"`
+	DiscountCash    float64        `json:"discount_cash"`
+	BalanceDiscountCash float64        `json:"balance_discount_cash"`
 	DiscountCashExpire *time.Time `json:"discount_cash_expire"`
 }
 
@@ -49,8 +49,8 @@ type CardDeposit struct {
 	BillNo          *string    `gorm:"column:bill_no" json:"bill_no"`
 	IsActive        bool       `gorm:"column:is_active;default:true" json:"is_active"`
 	CardExpireDate  *time.Time `gorm:"column:card_expire_date" json:"card_expire_date"`
-	DiscountCash    float32        `gorm:"column:discount_cash;default:0" json:"discount_cash"`
-	BalanceDiscountCash float32        `gorm:"column:balance_discount_cash;default:0" json:"balance_discount_cash"`
+	DiscountCash    float64        `gorm:"column:discount_cash;default:0" json:"discount_cash"`
+	BalanceDiscountCash float64        `gorm:"column:balance_discount_cash;default:0" json:"balance_discount_cash"`
 	DiscountCashExpire *time.Time `gorm:"column:discount_cash_expire" json:"discount_cash_expire"`
 }
 
@@ -58,7 +58,7 @@ type CardDepositBalanceDto struct {
 	ID           *uuid.UUID `json:"id"`
 	BalanceCoin  int        `json:"balance_coin"`
 	BalanceBonus int        `json:"balance_bonus"`
-	BalanceDiscountCash *float32        `json:"balance_discount_cash"`
+	BalanceDiscountCash *float64        `json:"balance_discount_cash"`
 }
 
 type CardDepositBonusExpireDto struct {

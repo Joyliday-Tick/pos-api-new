@@ -452,32 +452,17 @@ func GenerateBillNo(PosID string) string {
 	//
 	// bill_date เป็น timestamp without time zone และแอปเขียนลงไปด้วย
 	// utils.TimeNowAsia() ฉะนั้นค่าที่เก็บคือ "เวลาไทยแบบไม่มีโซน"
-	// ถ้าสร้างหน้าต่างนับจาก time.Now() จะได้เวลาตามโซนของ process
-	// ซึ่งใน container คือ UTC (ตรวจแล้ว TZ ว่าง, date ตอบ UTC)
-	// หน้าต่างกับข้อมูลจึงเพี้ยนกัน 7 ชั่วโมงทุกวัน
+	// ถ้าอ่านวันที่จาก time.Now() จะได้วันตามโซนของ process ซึ่งใน container
+	// คือ UTC (ตรวจแล้ว TZ ว่าง, date ตอบ UTC) วันในเลขบิลจึงเพี้ยนไป 7 ชั่วโมง
 	//
-	// อาการ: บิลที่ออกระหว่าง 00:00-07:00 ตามเวลาไทย จะไปนับรวมกับบิล
-	// ของเมื่อวาน และวันที่ในเลขบิลก็เป็นของเมื่อวานด้วย ขณะที่ bill_date
-	// เป็นวันนี้ — เลขบิลกับรายงานที่กรองด้วย bill_date จึงไม่ตรงกัน
-	// และตัวนับรีเซ็ตตอน 07:00 ไม่ใช่เที่ยงคืน
+	// อาการเดิม: บิลที่ออกระหว่าง 00:00-07:00 ตามเวลาไทย ได้วันที่ของเมื่อวาน
+	// ในเลขบิล ขณะที่ bill_date เป็นวันนี้ และตัวนับรีเซ็ตตอน 07:00 ไม่ใช่เที่ยงคืน
 	//
-	// ขัดกับจุดประสงค์ของ b90e38e ที่ใส่ day ลงเลขบิลเพื่อกันเลขซ้ำข้ามวัน
+	// เกิดขึ้นจริงแล้ว: `JYN-74-2604060003` ซ้ำสองใบ เวลา 00:09 กับ 00:11
+	// ของวันที่ 7 เม.ย. แต่เลขบิลเขียนวันที่ 6 — เป็นบิลซ้ำใบเดียวในฐานที่มาจาก
+	// เส้นทางนี้จริง ที่เหลือเป็นของ KIOSK กับข้อมูลที่ถูกก๊อป (ตรวจ 19 ก.ย.)
 	now := *utils.TimeNowAsia()
 	year, month, day := now.Date()
-
-	startOfDay := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
-	startOfNextDay := startOfDay.AddDate(0, 0, 1)
-
-	config.DB_POS.Model(&models.PosTransaction{}).
-		Where(
-			"pos_id = ? AND bill_date >= ? AND bill_date < ?",
-			PosID,
-			startOfDay,
-			startOfNextDay,
-		).
-		Count(&totalRecord)
-
-	totalRecord++
 
 	prefix := os.Getenv("BILL_PREFIX_NORMAL")
 	if prefix == "" {
@@ -486,20 +471,35 @@ func GenerateBillNo(PosID string) string {
 		prefix = "JYN"
 	}
 
-	// totalRecord นับเฉพาะบิลของ "วันนี้" (startOfDay..startOfNextDay)
-	// เลขบิลจึงต้องมี day ด้วย ไม่งั้นพอขึ้นวันใหม่ตัวนับรีเซ็ตเป็น 1
-	// แล้วได้เลขซ้ำกับบิลของวันก่อนหน้าในเดือนเดียวกัน
-	BillNo := fmt.Sprintf(
-		"%s-%s-%02d%02d%02d%04d",
-		prefix,
-		PosID,
-		year%100,
-		month,
-		day,
-		totalRecord,
-	)
+	// เลขบิลของวันนี้ทั้งหมดขึ้นต้นด้วยสตริงนี้ — ตัวนับจึงหาได้จากเลขบิลเอง
+	// ไม่ต้องพึ่ง bill_date และไม่ต้องมี day แยกต่างหากในเลข
+	billPrefixToday := fmt.Sprintf("%s-%s-%02d%02d%02d", prefix, PosID, year%100, int(month), day)
 
-	return BillNo
+	// เดิมใช้ COUNT(*) ของบิลวันนี้แล้ว +1 ซึ่งมีจุดอ่อนสองอย่าง
+	//
+	// 1. ถ้ามีการ "ลบ" บิล จำนวนแถวจะลดลง ตัวนับจึงถอยหลังไปทับเลขที่ออกไปแล้ว
+	//    (ในการใช้งานจริงบิลถูก void ไม่ถูกลบ แต่ไม่มีอะไรบังคับไว้)
+	// 2. COUNT นับบิลของ pos นั้นทุกใบไม่ว่าจะมาจาก stack ไหน ตัวนับของแต่ละ stack
+	//    จึงกระโดดตามปริมาณงานของอีกฝั่ง ไม่ต่อเนื่องในชุดเลขของตัวเอง
+	//
+	// อ่านเลขสูงสุดที่เคยออกไปแล้วแทน แก้ทั้งสองข้อพร้อมกัน: ลบบิลแล้วเลขไม่ถอย
+	// และนับเฉพาะบิลที่ขึ้นต้นด้วย prefix ของ stack ตัวเอง เลขจึงเรียงติดกัน
+	//
+	// ยังเหลือการแข่งกันเขียนพร้อมกันสองคำขอที่อ่านเลขเดียวกันแล้วได้เลขซ้ำ
+	// ปิดจริงต้องมี unique index บน bill_no ซึ่งเป็น schema ของฐานที่ใช้ร่วมกับ
+	// ระบบเก่า และข้อมูลตอนนี้มีเลขซ้ำอยู่แล้ว 23 กลุ่ม (ส่วนใหญ่มาจาก KIOSK
+	// กับข้อมูลที่ถูกก๊อป) จึงสร้าง index ไม่ผ่าน ต้องเป็นการตัดสินใจแยก
+	//
+	// substring '(\d{4})$' ตัดเอาสี่หลักท้าย ค่าที่ไม่ตรงรูปแบบ (เช่น 'test')
+	// ไม่ถูกดึงมาตั้งแต่เงื่อนไข LIKE อยู่แล้ว
+	config.DB_POS.Model(&models.PosTransaction{}).
+		Where("bill_no LIKE ?", billPrefixToday+"%").
+		Select(`COALESCE(MAX(substring(bill_no from '(\d{4})$')::int), 0)`).
+		Scan(&totalRecord)
+
+	totalRecord++
+
+	return fmt.Sprintf("%s%04d", billPrefixToday, totalRecord)
 }
 
 // func TaxInvoiceReport(params models.SearchTaxInvoiceReport) (utils.SearchResult, error) {

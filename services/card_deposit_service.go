@@ -172,14 +172,14 @@ func UpdateCardDepositBalance(input models.CardDepositBalanceDto) (models.CardDe
 		return input, fmt.Errorf("card deposit id is nil")
 	}
 
-	// BalanceDiscountCash เป็น *float32 และ 7 ใน 8 จุดที่สร้าง CardDepositBalanceDto
+	// BalanceDiscountCash เป็น *float64 และ 7 ใน 8 จุดที่สร้าง CardDepositBalanceDto
 	// ไม่ได้ตั้งค่านี้ (void, claim-prize, refund) ค่าที่ bind จึงเป็น NULL
 	// คอลัมน์ balance_discount_cash เป็น nullable ฐานข้อมูลจึงไม่ error
 	// แต่ balance_discount_cash - NULL = NULL ยอดส่วนลดหายไปเงียบ ๆ และเมื่อเป็น NULL
 	// แล้วทุกการคำนวณต่อจากนั้นก็เป็น NULL ตลอด ส่วน SUM() ในรายงานก็ข้ามแถวนั้นไป
 	// ตรวจ UAT เมื่อ 2026-09-17 พบเกิดไปแล้ว 9 แถวจาก 2678
 	// nil ต้องแปลว่า "ไม่มีส่วนลดให้หัก" = 0 ไม่ใช่ NULL
-	var discountCash float32
+	var discountCash float64
 	if input.BalanceDiscountCash != nil {
 		discountCash = *input.BalanceDiscountCash
 	}
@@ -239,8 +239,17 @@ func UpdateCardDepositBalance(input models.CardDepositBalanceDto) (models.CardDe
 	// การปิดช้าไปหนึ่งครั้งไม่เสียหาย (ครั้งถัดไปยอดไม่พอ UPDATE ก็ไม่โดนแถวแล้ว)
 	// แต่การปิดเร็วไปคือการยึดสิทธิ์ที่ลูกค้าจ่ายเงินมาแล้ว จึงเลือกทางที่ปิดยากกว่า
 	//
-	// discount cash เทียบ <= 0 ไม่ใช่ == 0 เพราะเป็น float32 การลบซ้ำ ๆ
-	// ทำให้ยอดที่ควรเป็น 0 พอดีไปจบที่ -0.0000019 ได้ (ดูข้อ 10 ใน SECURITY_AUDIT)
+	// discount cash เทียบ <= 0 ไม่ใช่ == 0 เป็นการกันไว้ก่อน
+	//
+	// ข้อ 10 ใน SECURITY_AUDIT เขียนว่ายอดที่ควรเป็น 0 พอดีจะไปจบที่ -0.0000019
+	// ซึ่ง**เกิดในฐานข้อมูลไม่ได้** — ตรวจ 19 ก.ย. คอลัมน์ balance_discount_cash
+	// เป็น numeric(8,2) ปัดเป็นทศนิยมสองตำแหน่งทุกครั้งที่เขียน และข้อมูลจริง
+	// 2,704 แถวไม่มีแถวไหนติดลบหรือมีเศษต่ำกว่า 0.01 เลย
+	//
+	// ที่เป็นความเสี่ยงจริงคือฝั่ง Go ต่างหาก: float32 เก็บเลขนัยสำคัญได้ ~7 หลัก
+	// ขณะที่คอลัมน์รับได้ถึง 999999.99 ซึ่งเป็น 8 หลัก ค่าที่ใกล้เพดานจึงเพี้ยน
+	// ตั้งแต่ตอนแปลงชนิด (999999.99 -> 1000000.00) เปลี่ยนเป็น float64 แล้ว 19 ก.ย.
+	// ส่วนการเทียบ <= 0 คงไว้เผื่อค่าที่ยังไม่ผ่านการปัดของฐานข้อมูล
 	var depositID []string
 	depositID = append(depositID, input.ID.String())
 	deposit, err := FindCardDepositByIds(depositID)

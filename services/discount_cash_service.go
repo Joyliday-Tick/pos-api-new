@@ -12,8 +12,8 @@ func GetDiscountCashByMemberTel(memberTel string) (*models.DiscountCashDto, erro
 	var deposit []models.CardDeposit
 	var discountCash models.DiscountCashDto
 	var discounts []models.DiscountsDto
-	var balanceDiscountCash float32
-	var balanceDiscountNearExpire float32
+	var balanceDiscountCash float64
+	var balanceDiscountNearExpire float64
 	var discountNearExpireDate *time.Time
 	if config.DB_POS == nil {
 		return nil, fmt.Errorf("database pos connection is nil")

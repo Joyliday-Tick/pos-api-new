@@ -476,8 +476,8 @@ func TopupCardPOS(c *gin.Context) {
 					return nil
 				}(),
 				//TODO : discount cash
-				DiscountCash:        float32(posMenu.DiscountCash),
-				BalanceDiscountCash: float32(posMenu.DiscountCash),
+				DiscountCash:        float64(posMenu.DiscountCash),
+				BalanceDiscountCash: float64(posMenu.DiscountCash),
 				DiscountCashExpire: func() *time.Time {
 					if posMenu.DiscountCashLimitDays != nil && *posMenu.DiscountCashLimitDays > 0 {
 						convertDiscountCashExpire := utils.AddDaysBangkok(*posMenu.DiscountCashLimitDays)

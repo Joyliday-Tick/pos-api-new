@@ -55,7 +55,7 @@ type CardPlayDeductDto struct {
 	ECoin      int        `json:"e_coin"`
 	EBonus     int        `json:"e_bonus"`
 	FromChannel *string     `json:"from_channel"`
-	DiscountCashAmount *float32 `json:"discount_cash_amount"`
+	DiscountCashAmount *float64 `json:"discount_cash_amount"`
 }
 type CardPlayVerifyResponse struct {
 	CardPlayId    *uuid.UUID     `json:"card_play_id"`
