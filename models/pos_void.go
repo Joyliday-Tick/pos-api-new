@@ -22,7 +22,7 @@ type PosVoidDto struct {
 
 type PosVoid struct {
 	VoidID uuid.UUID `gorm:"column:void_id;type:uuid;default:uuid_generate_v4();primaryKey" json:"void_id"`
-	// varchar(100) ตามคอลัมน์จริง (ตรวจ 2026-09-19) — ไม่ใช่ 50 เหมือน pos_transaction.bill_no
+	// varchar(100) ตามคอลัมน์จริง (ตรวจ 2026-09-24) — ไม่ใช่ 50 เหมือน pos_transaction.bill_no
 	BillNo   string    `gorm:"column:bill_no;type:varchar(100)" json:"bill_no"`
 	VoidDate time.Time `gorm:"column:void_date;default:now()" json:"void_date"`
 	VoidUser string    `gorm:"column:void_user;type:varchar(100)" json:"void_user"`

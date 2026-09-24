@@ -361,7 +361,7 @@ func UpdateAdjustPoint(input models.AdjustPointDto) (models.Member, error) {
 	updateDate := utils.TimeNowAsia()
 
 	// ยอด E-Stamp ของสมาชิกเก็บอยู่ที่คอลัมน์ ecoin — คอลัมน์ estamp ไม่ได้ใช้งาน
-	// (เจ้าของระบบยืนยัน 2026-09-19) adj_estamp จึงต้องขยับ ecoin อย่างเดียว
+	// (เจ้าของระบบยืนยัน 2026-09-24) adj_estamp จึงต้องขยับ ecoin อย่างเดียว
 	//
 	// เดิม UPDATE นี้เขียน estamp ไปด้วยค่าเดียวกัน ซึ่งเป็นการเขียนลงคอลัมน์ที่ไม่มีใครอ่าน
 	// และทำให้มันติดลบได้ด้วย เพราะเพดานที่ controller ตรวจเป็นของ ecoin
