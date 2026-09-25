@@ -59,3 +59,61 @@ jobs:
         run: |
           echo "pushed: ${IMAGE}:latest"
           echo "pushed: ${IMAGE}:${{ github.sha }}"
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, uat2-api] # label ที่ตั้งไว้ตอน config runner
+    permissions:
+      contents: read
+      packages: read # พอสำหรับ pull
+
+    steps:
+      # package ของ repo private เป็น private ด้วย จึงต้อง login ก่อน pull
+      # ใช้ GITHUB_TOKEN ของ run นี้ อายุสั้นและหมดอายุเองเมื่อ job จบ
+      # จึงไม่ต้องสร้าง PAT แล้วทิ้ง credential ถาวรไว้บน droplet
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: pull แล้วขึ้น container
+        run: |
+          COMPOSE=/var/app/data/compose/docker-compose.yml
+          docker compose -f "$COMPOSE" pull pos-api
+          docker compose -f "$COMPOSE" up -d pos-api
+
+      - name: รอให้ container ขึ้นจริง
+        run: |
+          for i in $(seq 1 15); do
+            if [ "$(docker inspect -f '{{.State.Running}}' pos-api 2>/dev/null)" = "true" ]; then
+              echo "container running หลังรอ ${i} วินาที"; exit 0
+            fi
+            sleep 1
+          done
+          echo "container ไม่ขึ้นภายใน 15 วินาที"; docker logs pos-api --tail 50; exit 1
+
+      # ตรวจสองอย่างที่พังแบบเงียบ ๆ ได้ถ้า compose ตั้งไม่ครบ
+      # แสดงแค่ความยาว ไม่แสดงค่า
+      - name: ตรวจว่า env มาถึง container ครบ
+        run: |
+          JWT_LEN=$(docker exec pos-api printenv JWT_SECRET | wc -c)
+          PWD_LEN=$(docker exec pos-api printenv SERVICE_PASSWORD | wc -c)
+          echo "JWT_SECRET ยาว $JWT_LEN (ต้องเป็น 65)"
+          echo "SERVICE_PASSWORD ยาว $PWD_LEN (ต้องเป็น 26)"
+          # ขาด env_file -> JWT ว่าง และจะไม่มีอาการผิดปกติให้เห็นเลย
+          [ "$JWT_LEN" -ge 33 ] || { echo "JWT_SECRET สั้นผิดปกติ — env_file ไม่ทำงาน"; exit 1; }
+          # ขาด format: raw -> Compose กิน $ ในรหัสผ่าน ค่าจะสั้นกว่าจริง
+          [ "$PWD_LEN" -eq 26 ] || { echo "SERVICE_PASSWORD ความยาวไม่ตรง — format raw ไม่ทำงาน"; exit 1; }
+
+      - name: ตรวจ log ตอนบูต
+        run: |
+          sleep 3
+          docker logs pos-api --tail 40
+          docker logs pos-api 2>&1 | grep -q "Error loading .env" && { echo "อ่าน .env ไม่ได้ — bind mount ไม่ทำงาน"; exit 1; }
+          echo "ไม่พบ Error loading .env"
+
+      # ไม่ทิ้ง credential ค้างไว้ใน /root/.docker/config.json
+      - name: logout ghcr
+        if: always()
+        run: docker logout ghcr.io
