@@ -557,6 +557,11 @@ AutoMigrate จะหดคอลัมน์และตัดข้อมู�
 - `buildQuery` ใช้ `URLSearchParams` ไม่มีช่อง injection และแก้บั๊กคำว่า `"null"` ได้จริง
 - `upstream.js` อ่าน body ครั้งเดียว ไม่ได้เพิ่ม latency และ service token ถูก cache ตาม `exp`
 - API route ทั้ง 104 ตัวมี `apiGuard` ครบ ยกเว้น `auth/*` `device` `get-mac` `qz/*`
+  > **แก้ 25 ก.ย.: `qz/*` ไม่ใช่ endpoint ก่อน login** — ตัว route ไม่มี `apiGuard` จริง
+  > แต่ `proxy.js` กั้นอีกชั้นและ `/api/qz/cert` **ไม่ได้อยู่ใน `PUBLIC_APIS`**
+  > ยิงโดยไม่มี session จึงได้ `{"success":false,"message":"กรุณาเข้าสู่ระบบก่อนใช้งาน"}`
+  > ใช้งานได้ปกติเพราะคอมโพเนนต์ QZ ทำงานบนหน้าที่ล็อกอินแล้วเท่านั้น
+  > แต่ถ้าจะทดสอบด้วย curl ต้องแนบ cookie หรืออ่านจาก `printenv QZ_CERT` ใน container แทน
   ซึ่งเป็น endpoint ก่อน login โดยตั้งใจ
 - `FindUserDbByUsername` กรอง `is_active AND NOT is_delete` — ผู้ใช้ role Disabled
   626 คน **login ไม่ได้เลยสักคน**
