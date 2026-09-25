@@ -1,0 +1,55 @@
+name: build-uat2
+
+# รอบแรกทำแค่ build + push ขึ้น ghcr ยังไม่ deploy
+# ให้พิสูจน์ก่อนว่า image ขึ้นทะเบียนได้จริง แล้วค่อยเพิ่ม job deploy ทีหลัง
+# (แผนเตือนไว้ว่าการ debug ผ่าน CI ช้ากว่ามากเมื่อยังไม่รู้ว่าจุดไหนพัง
+#  การแยกสองเรื่องออกจากกันจึงทำให้รู้ได้ทันทีว่าพังที่ build หรือที่ deploy)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: uat2-api
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # ต้องมี ไม่งั้น push ขึ้น ghcr ไม่ได้
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ghcr บังคับว่าชื่อ repository ต้องเป็นตัวพิมพ์เล็กทั้งหมด
+      # เจ้าของ repo ชื่อ Joyliday-Tick ซึ่งมีตัวใหญ่ ถ้าใส่ตรง ๆ จะได้
+      # invalid reference format: repository name must be lowercase
+      - name: ตั้งชื่อ image เป็นตัวพิมพ์เล็ก
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE=ghcr.io/${OWNER}/pos-api-new" >> "$GITHUB_ENV"
+          echo "จะ push ไปที่ ghcr.io/${OWNER}/pos-api-new"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # มีให้อัตโนมัติ ไม่ต้องตั้ง secret เอง
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: สรุป tag ที่ push ขึ้นไป
+        run: |
+          echo "pushed: ${IMAGE}:latest"
+          echo "pushed: ${IMAGE}:${{ github.sha }}"
